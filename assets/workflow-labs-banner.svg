@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">Camunda workflow labs</title><desc id="desc">Three workflow streams connected to a Camunda orchestration core.</desc>
+  <defs><linearGradient id="bg" x1="0" x2="1"><stop stop-color="#082f49"/><stop offset="1" stop-color="#0f766e"/></linearGradient><filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-opacity=".22"/></filter></defs>
+  <rect width="1200" height="300" rx="24" fill="url(#bg)"/>
+  <circle cx="1110" cy="45" r="125" fill="#2dd4bf" opacity=".13"/><circle cx="1010" cy="290" r="150" fill="#fef3c7" opacity=".08"/>
+  <text x="72" y="92" fill="#99f6e4" font-family="Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="4">CAMUNDA 8 · PRACTICAL ASSIGNMENT</text>
+  <text x="72" y="150" fill="white" font-family="Arial, sans-serif" font-size="45" font-weight="700">Workflow Automation Labs</text>
+  <text x="72" y="190" fill="#d1fae5" font-family="Arial, sans-serif" font-size="20">BPMN orchestration · DMN decisions · Java workers · REST integrations</text>
+  <g filter="url(#shadow)"><rect x="72" y="224" width="160" height="40" rx="20" fill="#ecfdf5"/><text x="97" y="250" fill="#115e59" font-family="Arial, sans-serif" font-size="15" font-weight="700">01  LOANS</text><rect x="245" y="224" width="172" height="40" rx="20" fill="#ecfdf5"/><text x="270" y="250" fill="#115e59" font-family="Arial, sans-serif" font-size="15" font-weight="700">02  ORDERS</text><rect x="430" y="224" width="170" height="40" rx="20" fill="#ecfdf5"/><text x="455" y="250" fill="#115e59" font-family="Arial, sans-serif" font-size="15" font-weight="700">03  TRIAGE</text></g>
+</svg>

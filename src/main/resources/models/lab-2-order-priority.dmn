@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="orderDefinitions" name="Order Priority" namespace="http://camunda.io/labs">
+  <decision id="order-priority" name="Order priority"><decisionTable id="priorityTable" hitPolicy="FIRST">
+    <input id="total"><inputExpression typeRef="number"><text>orderTotal</text></inputExpression></input>
+    <input id="customer"><inputExpression typeRef="string"><text>customerCategory</text></inputExpression></input>
+    <input id="delivery"><inputExpression typeRef="string"><text>deliveryPreference</text></inputExpression></input>
+    <output id="priority" name="deliveryPriority" typeRef="string"/>
+    <rule id="express"><inputEntry><text>&gt;= 5000</text></inputEntry><inputEntry><text>"GOLD"</text></inputEntry><inputEntry><text>"EXPRESS"</text></inputEntry><outputEntry><text>"P1"</text></outputEntry></rule>
+    <rule id="priority"><inputEntry><text>&gt;= 2000</text></inputEntry><inputEntry><text>-</text></inputEntry><inputEntry><text>"EXPRESS"</text></inputEntry><outputEntry><text>"P2"</text></outputEntry></rule>
+    <rule id="standard"><inputEntry><text>-</text></inputEntry><inputEntry><text>-</text></inputEntry><inputEntry><text>-</text></inputEntry><outputEntry><text>"P3"</text></outputEntry></rule>
+  </decisionTable></decision>
+</definitions>

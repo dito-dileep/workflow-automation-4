@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Loan" targetNamespace="http://camunda.io/labs">
+  <bpmn:process id="loan-approval" name="Lab 1 — Loan Approval" isExecutable="true">
+    <bpmn:startEvent id="start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="validate" name="Validate applicant information"><bpmn:extensionElements><zeebe:taskDefinition type="validate-loan-application" retries="3"/></bpmn:extensionElements><bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="valid" name="Application valid?"><bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing><bpmn:outgoing>f4</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:endEvent id="invalid" name="Rejected — invalid data"><bpmn:incoming>f3</bpmn:incoming></bpmn:endEvent>
+    <bpmn:serviceTask id="credit" name="Mock credit assessment"><bpmn:extensionElements><zeebe:taskDefinition type="io.camunda:http-json:1" retries="3"/></bpmn:extensionElements><bpmn:incoming>f4</bpmn:incoming><bpmn:outgoing>f5</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:businessRuleTask id="decision" name="Evaluate loan decision"><bpmn:extensionElements><zeebe:calledDecision decisionId="loan-decision" resultVariable="loanDecision"/></bpmn:extensionElements><bpmn:incoming>f5</bpmn:incoming><bpmn:outgoing>f6</bpmn:outgoing></bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="route" name="Decision route"><bpmn:incoming>f6</bpmn:incoming><bpmn:outgoing>f7</bpmn:outgoing><bpmn:outgoing>f8</bpmn:outgoing><bpmn:outgoing>f9</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:userTask id="review" name="Manual loan review"><bpmn:extensionElements><zeebe:assignmentDefinition assignee="loan-reviewer"/></bpmn:extensionElements><bpmn:incoming>f8</bpmn:incoming><bpmn:outgoing>f10</bpmn:outgoing></bpmn:userTask>
+    <bpmn:endEvent id="approved" name="Loan approved"><bpmn:incoming>f7</bpmn:incoming><bpmn:incoming>f10</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="rejected" name="Loan rejected"><bpmn:incoming>f9</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="validate"/><bpmn:sequenceFlow id="f2" sourceRef="validate" targetRef="valid"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="valid" targetRef="invalid"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=applicationValid = false</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f4" sourceRef="valid" targetRef="credit"/><bpmn:sequenceFlow id="f5" sourceRef="credit" targetRef="decision"/><bpmn:sequenceFlow id="f6" sourceRef="decision" targetRef="route"/>
+    <bpmn:sequenceFlow id="f7" sourceRef="route" targetRef="approved"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=loanDecision = "Approved"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f8" sourceRef="route" targetRef="review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=loanDecision = "Manual Review"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f9" sourceRef="route" targetRef="rejected"/><bpmn:sequenceFlow id="f10" sourceRef="review" targetRef="approved"/>
+  </bpmn:process>
+</bpmn:definitions>

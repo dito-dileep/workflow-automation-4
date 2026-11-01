@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="triageDefinitions" name="Educational Triage" namespace="http://camunda.io/labs">
+  <decision id="triage-decision" name="Triage decision"><decisionTable id="triageTable" hitPolicy="FIRST">
+    <input id="urgency"><inputExpression typeRef="string"><text>urgencyIndicator</text></inputExpression></input>
+    <input id="symptoms"><inputExpression typeRef="string"><text>symptomsSummary</text></inputExpression></input>
+    <output id="category" name="triageCategory" typeRef="string"/>
+    <rule id="urgent"><inputEntry><text>"RED"</text></inputEntry><inputEntry><text>-</text></inputEntry><outputEntry><text>"Urgent Assessment"</text></outputEntry></rule>
+    <rule id="priority"><inputEntry><text>"AMBER"</text></inputEntry><inputEntry><text>-</text></inputEntry><outputEntry><text>"Priority Review"</text></outputEntry></rule>
+    <rule id="routine"><inputEntry><text>-</text></inputEntry><inputEntry><text>-</text></inputEntry><outputEntry><text>"Routine"</text></outputEntry></rule>
+  </decisionTable></decision>
+</definitions>

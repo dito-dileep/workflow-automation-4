@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: camunda-workflow-labs
+server:
+  port: 8081
+camunda:
+  client:
+    mode: self-managed
+    auth:
+      method: none
+    grpc-address: ${CAMUNDA_GRPC_ADDRESS:http://localhost:26500}
+    rest-address: ${CAMUNDA_REST_ADDRESS:http://localhost:8080}
+    worker:
+      defaults:
+        max-jobs-active: 16
+logging:
+  level:
+    edu.camunda.workflowlabs: INFO

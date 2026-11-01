@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="loanDefinitions" name="Loan Decisions" namespace="http://camunda.io/labs">
+  <decision id="loan-decision" name="Loan decision"><decisionTable id="loanTable" hitPolicy="FIRST">
+    <input id="income"><inputExpression typeRef="number"><text>monthlyIncome</text></inputExpression></input>
+    <input id="amount"><inputExpression typeRef="number"><text>requestedAmount</text></inputExpression></input>
+    <input id="score"><inputExpression typeRef="number"><text>creditScore</text></inputExpression></input>
+    <output id="outcome" name="loanDecision" typeRef="string"/>
+    <rule id="approve"><inputEntry><text>&gt;= 50000</text></inputEntry><inputEntry><text>&lt;= 500000</text></inputEntry><inputEntry><text>&gt;= 700</text></inputEntry><outputEntry><text>"Approved"</text></outputEntry></rule>
+    <rule id="review"><inputEntry><text>&gt;= 30000</text></inputEntry><inputEntry><text>&lt;= 750000</text></inputEntry><inputEntry><text>&gt;= 600</text></inputEntry><outputEntry><text>"Manual Review"</text></outputEntry></rule>
+    <rule id="reject"><inputEntry><text>-</text></inputEntry><inputEntry><text>-</text></inputEntry><inputEntry><text>-</text></inputEntry><outputEntry><text>"Rejected"</text></outputEntry></rule>
+  </decisionTable></decision>
+</definitions>

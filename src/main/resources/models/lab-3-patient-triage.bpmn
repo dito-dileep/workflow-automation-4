@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Triage" targetNamespace="http://camunda.io/labs">
+  <bpmn:process id="patient-triage" name="Lab 3 — Hospital Appointment &amp; Triage" isExecutable="true">
+    <bpmn:startEvent id="start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="register" name="Validate registration &amp; availability"><bpmn:extensionElements><zeebe:taskDefinition type="validate-registration-and-availability" retries="3"/></bpmn:extensionElements><bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:businessRuleTask id="triage" name="Classify triage urgency"><bpmn:extensionElements><zeebe:calledDecision decisionId="triage-decision" resultVariable="triageCategory"/></bpmn:extensionElements><bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing></bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="urgent" name="Urgent assessment?"><bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing><bpmn:outgoing>f5</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:userTask id="urgentReview" name="Immediate clinical assessment"><bpmn:extensionElements><zeebe:assignmentDefinition assignee="clinical-triage"/></bpmn:extensionElements><bpmn:incoming>f4</bpmn:incoming><bpmn:outgoing>f10</bpmn:outgoing></bpmn:userTask>
+    <bpmn:serviceTask id="schedule" name="Mock scheduling API"><bpmn:extensionElements><zeebe:taskDefinition type="io.camunda:http-json:1" retries="3"/></bpmn:extensionElements><bpmn:incoming>f5</bpmn:incoming><bpmn:outgoing>f6</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="slot" name="Suitable slot available?"><bpmn:incoming>f6</bpmn:incoming><bpmn:outgoing>f7</bpmn:outgoing><bpmn:outgoing>f8</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:userTask id="staffReview" name="Staff scheduling review"><bpmn:extensionElements><zeebe:assignmentDefinition assignee="appointment-staff"/></bpmn:extensionElements><bpmn:incoming>f7</bpmn:incoming><bpmn:outgoing>f9</bpmn:outgoing></bpmn:userTask>
+    <bpmn:endEvent id="booked" name="Appointment booked"><bpmn:incoming>f8</bpmn:incoming><bpmn:incoming>f9</bpmn:incoming><bpmn:incoming>f10</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="register"/><bpmn:sequenceFlow id="f2" sourceRef="register" targetRef="triage"/><bpmn:sequenceFlow id="f3" sourceRef="triage" targetRef="urgent"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="urgent" targetRef="urgentReview"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=triageCategory = "Urgent Assessment"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f5" sourceRef="urgent" targetRef="schedule"/><bpmn:sequenceFlow id="f6" sourceRef="schedule" targetRef="slot"/>
+    <bpmn:sequenceFlow id="f7" sourceRef="slot" targetRef="staffReview"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=slotAvailable = false</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f8" sourceRef="slot" targetRef="booked"/><bpmn:sequenceFlow id="f9" sourceRef="staffReview" targetRef="booked"/><bpmn:sequenceFlow id="f10" sourceRef="urgentReview" targetRef="booked"/>
+  </bpmn:process>
+</bpmn:definitions>
