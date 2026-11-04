@@ -4,15 +4,25 @@ All integrations use the local mock API bundled with this project. They accept s
 
 ## Camunda HTTP JSON Connector configuration
 
-In Camunda Modeler, configure the **REST connector** service task with the following values. Keep the default retry count at 3 so a temporary mock outage becomes visible as an Operate incident and can be retried after correction.
+The BPMN models already contain these HTTP JSON connector settings. In Camunda Modeler, use the values below if you need to inspect or recreate a service task. The local Camunda 8 Run connector calls the Spring Boot mock API on the same machine.
 
-| Lab | Task | Method + URL | Request body | Response mappings |
+| Lab | Task | Method + URL | Request body | Result expression |
 |---|---|---|---|---|
-| 1 | Mock credit assessment | `POST http://host.docker.internal:8081/mock/credit-assessments` | `={"syntheticCreditScore": creditScore, "simulateFailure": simulateFailure}` | `creditScore`, `creditStatus` |
-| 2 | Mock payment gateway | `POST http://host.docker.internal:8081/mock/payments` | `={"paymentToken": paymentToken, "simulateFailure": simulateFailure}` | `paymentStatus`, `transactionRef` |
-| 3 | Mock scheduling API | `POST http://host.docker.internal:8081/mock/appointments` | `={"slotMode": slotMode, "simulateFailure": simulateFailure}` | `slotAvailable`, `availableSlot` |
+| 1 | Mock credit assessment | `POST http://localhost:8081/mock/credit-assessments` | `={"syntheticCreditScore": creditScore, "simulateFailure": simulateFailure}` | `={creditScore: response.body.creditScore, creditStatus: response.body.creditStatus}` |
+| 2 | Mock payment gateway | `POST http://localhost:8081/mock/payments` | `={"paymentToken": paymentToken, "simulateFailure": simulateFailure}` | `={paymentStatus: response.body.paymentStatus, transactionRef: response.body.transactionRef}` |
+| 3 | Mock scheduling API | `POST http://localhost:8081/mock/appointments` | `={"slotMode": slotMode, "simulateFailure": simulateFailure}` | `={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot}` |
 
-For a locally installed Camunda runtime on the host, replace `host.docker.internal` with `localhost`. Do not put real API keys, card data, patient data, or passwords in either model or repository.
+These result expressions are stored in the connector's `resultExpression` task header; do not replace them with BPMN output mappings.
+
+For a connector running in a separate container, replace `localhost` with `host.docker.internal` so it can reach the API on the Windows host. Do not put real API keys, card data, patient data, or passwords in either model or repository.
+
+To show an incident, switch the relevant mock off, run the process with `simulateFailure` omitted or `false`, then switch the mock back on and click **Retry** in Operate. The connector retries the request using the same mapped inputs; changing a process variable after the failure does not alter that request. Each BPMN HTTP task has one attempt configured so the incident appears promptly.
+
+| Lab | Switch off | Switch on |
+|---|---|---|
+| 1 | http://localhost:8081/mock/controls/credit?down=true | http://localhost:8081/mock/controls/credit?down=false |
+| 2 | http://localhost:8081/mock/controls/payment?down=true | http://localhost:8081/mock/controls/payment?down=false |
+| 3 | http://localhost:8081/mock/controls/scheduling?down=true | http://localhost:8081/mock/controls/scheduling?down=false |
 
 ## API examples
 

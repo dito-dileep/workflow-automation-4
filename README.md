@@ -63,25 +63,35 @@ BPMN_Exercise_4/
 
 ### 1. Prerequisites
 
-- Java 21 (or a compatible JDK ≥17)
-- Maven 3.9+
-- A reachable Camunda 8 Self-Managed cluster, or adapt `application.yml` for your Camunda SaaS cluster
+- Java 21
+- [Camunda 8 Run 8.8](https://downloads.camunda.cloud/release/camunda/c8run/8.8/) already unzipped
+- Maven 3.9+, available on this machine at `C:\Users\ditod\Downloads\apache-maven-3.9.9`
 
-### 2. Start the worker and mock API
+### 2. Start Camunda, then the worker
 
-```bash
-mvn spring-boot:run
+Terminal 1, in PowerShell:
+
+```powershell
+Set-Location "$HOME\Downloads\camunda8-run-8.8-windows-x86_64\c8run-8.8.32"
+.\c8run.exe start
 ```
 
-The application deploys models on startup and exposes local synthetic integration endpoints at `http://localhost:8081/mock/*`.
+- Operate: http://localhost:8080/operate
+- Tasklist: http://localhost:8080/tasklist
+- Login: `demo` / `demo`
 
-### 3. Configure the REST tasks
+Terminal 2, in PowerShell:
 
-Open each BPMN model in Camunda Modeler and apply the connector fields in [REST Connector Guide](docs/REST_CONNECTOR_GUIDE.md). This is intentionally documented separately so the cluster-specific URL is easy to adapt.
+```powershell
+Set-Location "$HOME\OneDrive\Desktop\dataset\BPMN_Exercise_4"
+& "$HOME\Downloads\apache-maven-3.9.9\bin\mvn.cmd" spring-boot:run
+```
 
-### 4. Deploy, execute, evidence
+The application deploys the models and exposes the synthetic APIs at `http://localhost:8081/mock/*`. Leave both terminals open during the demo.
 
-Deploy the BPMN and DMN resources, then run the scenarios in [Test Matrix](docs/TEST_MATRIX.md). Complete user tasks in Tasklist; inspect variables, incidents, and retries in Operate. Add screenshots from your own running environment to [`evidence/`](evidence/README.md).
+### 3. Run the three labs
+
+Create each process instance with the PowerShell commands in the [Test Matrix](docs/TEST_MATRIX.md). Use Operate to monitor instances and recover incidents; use Tasklist to complete the human review tasks assigned to `demo`. Incident recovery steps are in the [REST Connector Guide](docs/REST_CONNECTOR_GUIDE.md).
 
 ## Lab snapshots
 
@@ -115,17 +125,17 @@ Orders with unavailable stock or declined payment end cleanly. High-value orders
 - [Variable dictionary](docs/VARIABLE_DICTIONARY.md) — variable names, types, and purpose
 - [REST connector guide](docs/REST_CONNECTOR_GUIDE.md) — connector configuration and request/response examples
 - [Test matrix](docs/TEST_MATRIX.md) — required normal, exception, and recovery scenarios
-- [Evidence checklist](evidence/README.md) — exact screenshots to capture before submission
+- [Evidence and screenshots](evidence/README.md) — genuine Operate screenshots for all three labs and remaining evidence checklist
 
 ## Incident recovery demo
 
-Every mock endpoint accepts `simulateFailure: true`. This responds with an intentional HTTP 503 so you can demonstrate the complete recovery path:
+To demonstrate an incident, switch the relevant mock service off before starting the process, then switch it back on after the incident appears in Operate. Retry the failed job:
 
 ```text
-Run instance → connector retries exhaust → Operate incident → correct input/service → retry job → complete instance
+Switch mock off → run instance → Operate incident → switch mock on → retry job → complete instance
 ```
 
-Record the incident and successful retry in the test matrix. The repository does **not** include fake screenshots; submission evidence should be captured from your own deployment.
+The connector tasks are configured with one attempt so the incident appears quickly. Retry repeats the HTTP request with the same process variables, so use the mock controls rather than changing `simulateFailure` on the failed instance. Record the incident and successful retry in the test matrix. The [evidence folder](evidence/README.md) contains genuine Operate screenshots from the local run; capture any additional Tasklist and incident/recovery evidence from your own deployment.
 
 ## Repository description
 

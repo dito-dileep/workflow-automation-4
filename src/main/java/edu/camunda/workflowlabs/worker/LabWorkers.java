@@ -1,7 +1,7 @@
 package edu.camunda.workflowlabs.worker;
 
 import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.spring.client.annotation.JobWorker;
+import io.camunda.zeebe.spring.client.annotation.JobWorker;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;

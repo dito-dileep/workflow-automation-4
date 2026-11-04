@@ -1,22 +1,114 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Order" targetNamespace="http://camunda.io/labs">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Order" targetNamespace="http://camunda.io/labs">
   <bpmn:process id="order-fulfilment" name="Lab 2 — E-Commerce Order Fulfilment" isExecutable="true">
-    <bpmn:startEvent id="start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
-    <bpmn:serviceTask id="stock" name="Validate order &amp; reserve stock"><bpmn:extensionElements><zeebe:taskDefinition type="validate-order-and-stock" retries="3"/></bpmn:extensionElements><bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="availability" name="Stock available?"><bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing><bpmn:outgoing>f4</bpmn:outgoing></bpmn:exclusiveGateway>
-    <bpmn:endEvent id="outOfStock" name="Order stopped — no stock"><bpmn:incoming>f3</bpmn:incoming></bpmn:endEvent>
-    <bpmn:businessRuleTask id="priority" name="Determine delivery priority"><bpmn:extensionElements><zeebe:calledDecision decisionId="order-priority" resultVariable="deliveryPriority"/></bpmn:extensionElements><bpmn:incoming>f4</bpmn:incoming><bpmn:outgoing>f5</bpmn:outgoing></bpmn:businessRuleTask>
-    <bpmn:serviceTask id="payment" name="Mock payment gateway"><bpmn:extensionElements><zeebe:taskDefinition type="io.camunda:http-json:1" retries="3"/></bpmn:extensionElements><bpmn:incoming>f5</bpmn:incoming><bpmn:outgoing>f6</bpmn:outgoing></bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="paid" name="Payment approved?"><bpmn:incoming>f6</bpmn:incoming><bpmn:outgoing>f7</bpmn:outgoing><bpmn:outgoing>f8</bpmn:outgoing></bpmn:exclusiveGateway>
-    <bpmn:endEvent id="declined" name="Order stopped — payment declined"><bpmn:incoming>f7</bpmn:incoming></bpmn:endEvent>
-    <bpmn:exclusiveGateway id="reviewNeeded" name="High-value or exception?"><bpmn:incoming>f8</bpmn:incoming><bpmn:outgoing>f9</bpmn:outgoing><bpmn:outgoing>f10</bpmn:outgoing></bpmn:exclusiveGateway>
-    <bpmn:userTask id="review" name="Manual order verification"><bpmn:extensionElements><zeebe:assignmentDefinition assignee="order-reviewer"/></bpmn:extensionElements><bpmn:incoming>f9</bpmn:incoming><bpmn:outgoing>f11</bpmn:outgoing></bpmn:userTask>
-    <bpmn:endEvent id="fulfilled" name="Release to fulfilment"><bpmn:incoming>f10</bpmn:incoming><bpmn:incoming>f11</bpmn:incoming></bpmn:endEvent>
-    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="stock"/><bpmn:sequenceFlow id="f2" sourceRef="stock" targetRef="availability"/>
-    <bpmn:sequenceFlow id="f3" sourceRef="availability" targetRef="outOfStock"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=stockAvailable = false</bpmn:conditionExpression></bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f4" sourceRef="availability" targetRef="priority"/><bpmn:sequenceFlow id="f5" sourceRef="priority" targetRef="payment"/><bpmn:sequenceFlow id="f6" sourceRef="payment" targetRef="paid"/>
-    <bpmn:sequenceFlow id="f7" sourceRef="paid" targetRef="declined"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=paymentStatus = "DECLINED"</bpmn:conditionExpression></bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f8" sourceRef="paid" targetRef="reviewNeeded"/><bpmn:sequenceFlow id="f9" sourceRef="reviewNeeded" targetRef="review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">=orderTotal &gt;= 10000</bpmn:conditionExpression></bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f10" sourceRef="reviewNeeded" targetRef="fulfilled"/><bpmn:sequenceFlow id="f11" sourceRef="review" targetRef="fulfilled"/>
+    <bpmn:startEvent id="start" name="Order received">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="stock" name="Validate order and reserve stock">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="validate-order-and-stock" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="availability" name="Stock available?" default="f4">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="outOfStock" name="Stopped — no stock">
+      <bpmn:incoming>f3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:businessRuleTask id="priority" name="Determine delivery priority">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="order-priority" resultVariable="deliveryPriority" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:serviceTask id="payment" name="Mock payment gateway">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="1" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&quot;POST&quot;" target="method" />
+          <zeebe:input source="=&quot;http://localhost:8081/mock/payments&quot;" target="url" />
+          <zeebe:input source="={&quot;type&quot;:&quot;noAuth&quot;}" target="authentication" />
+          <zeebe:input source="={&quot;paymentToken&quot;: if is defined(paymentToken) then paymentToken else &quot;OK&quot;, &quot;simulateFailure&quot;: if is defined(simulateFailure) then simulateFailure else false}" target="body" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultExpression" value="={paymentStatus: response.body.paymentStatus, transactionRef: response.body.transactionRef}" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="paid" name="Payment approved?" default="f8">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="declined" name="Stopped — payment declined">
+      <bpmn:incoming>f7</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="reviewNeeded" name="High-value order?" default="f10">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="review" name="Manual order verification">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:assignmentDefinition assignee="demo" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="fulfilled" name="Release to fulfilment">
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:incoming>f11</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="stock" />
+    <bpmn:sequenceFlow id="f2" sourceRef="stock" targetRef="availability" />
+    <bpmn:sequenceFlow id="f3" name="No" sourceRef="availability" targetRef="outOfStock">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=stockAvailable = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f4" name="Yes" sourceRef="availability" targetRef="priority" />
+    <bpmn:sequenceFlow id="f5" sourceRef="priority" targetRef="payment" />
+    <bpmn:sequenceFlow id="f6" sourceRef="payment" targetRef="paid" />
+    <bpmn:sequenceFlow id="f7" name="Declined" sourceRef="paid" targetRef="declined">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=paymentStatus = "DECLINED"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f8" name="Approved" sourceRef="paid" targetRef="reviewNeeded" />
+    <bpmn:sequenceFlow id="f9" name="Yes" sourceRef="reviewNeeded" targetRef="review">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=orderTotal &gt;= 10000</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f10" name="No" sourceRef="reviewNeeded" targetRef="fulfilled" />
+    <bpmn:sequenceFlow id="f11" sourceRef="review" targetRef="fulfilled" />
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_order">
+    <bpmndi:BPMNPlane id="BPMNPlane_order" bpmnElement="order-fulfilment">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="140" y="212" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="stock_di" bpmnElement="stock"><dc:Bounds x="230" y="190" width="180" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="availability_di" bpmnElement="availability" isMarkerVisible="true"><dc:Bounds x="460" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="outOfStock_di" bpmnElement="outOfStock"><dc:Bounds x="467" y="370" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="priority_di" bpmnElement="priority"><dc:Bounds x="560" y="190" width="180" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="790" y="190" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="paid_di" bpmnElement="paid" isMarkerVisible="true"><dc:Bounds x="1010" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="declined_di" bpmnElement="declined"><dc:Bounds x="1017" y="370" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reviewNeeded_di" bpmnElement="reviewNeeded" isMarkerVisible="true"><dc:Bounds x="1120" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_di" bpmnElement="review"><dc:Bounds x="1230" y="300" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="fulfilled_di" bpmnElement="fulfilled"><dc:Bounds x="1420" y="212" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="176" y="230" /><di:waypoint x="230" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="410" y="230" /><di:waypoint x="460" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="485" y="255" /><di:waypoint x="485" y="370" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="510" y="230" /><di:waypoint x="560" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5"><di:waypoint x="740" y="230" /><di:waypoint x="790" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="960" y="230" /><di:waypoint x="1010" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7"><di:waypoint x="1035" y="255" /><di:waypoint x="1035" y="370" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8"><di:waypoint x="1060" y="230" /><di:waypoint x="1120" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9"><di:waypoint x="1145" y="255" /><di:waypoint x="1145" y="340" /><di:waypoint x="1230" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10"><di:waypoint x="1170" y="230" /><di:waypoint x="1420" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11"><di:waypoint x="1400" y="340" /><di:waypoint x="1438" y="340" /><di:waypoint x="1438" y="248" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

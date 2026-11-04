@@ -1,6 +1,12 @@
-# Evidence to capture before submission
+# Evidence for submission
 
-This folder intentionally contains no fabricated screenshots. After running the processes, add your own captures with these suggested names:
+These are genuine Operate screenshots from the local Camunda run. They show the deployed workflow diagrams and active process/task markers:
+
+- [Lab 1 — Loan approval in Operate](lab-1-operate-live.png)
+- [Lab 2 — Order fulfilment in Operate](lab-2-operate-live.png)
+- [Lab 3 — Patient triage in Operate](lab-3-operate-live.png)
+
+For a fuller presentation record, capture your own Tasklist completion and incident/recovery screens after running those scenarios. Suggested additional captures:
 
 ```text
 evidence/
@@ -18,4 +24,4 @@ evidence/
 └── lab-3-operate-recovered.png
 ```
 
-Use the instance keys in `docs/TEST_MATRIX.md` to connect every screenshot to its executed test. Blur or avoid any non-synthetic values.
+Use the instance keys in `docs/TEST_MATRIX.md` to connect every screenshot to its executed test. The supplied screenshots show local test instances; run fresh instances during your presentation. Blur or avoid any non-synthetic values.
