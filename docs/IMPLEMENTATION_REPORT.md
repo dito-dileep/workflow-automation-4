@@ -7,8 +7,8 @@ Each lab uses BPMN for orchestration, a DMN decision table for transparent routi
 ## Implementation notes
 
 - **Loan approval:** validates core application data, requests a synthetic credit assessment, then applies documented income / amount / score rules.
-- **Order fulfilment:** validates an order and simulated stock, determines fulfilment priority, applies a mock payment result, and routes high-value orders to verification.
-- **Patient triage:** uses only synthetic patient references and educational urgency indicators; it is not a clinical decision-support system.
+- **Order fulfilment:** validates an order and simulated stock, determines fulfilment priority, applies a mock payment result, and routes `P1`/`P2` DMN outcomes to verification while `P3` proceeds to fulfilment.
+- **Patient triage:** validates the registration through an explicit BPMN gateway, uses synthetic patient references and educational urgency indicators, and routes routine/priority/urgent decisions from the DMN output. The mock scheduling API returns a slot list and availability status; it is not a clinical decision-support system or a real booking system.
 
 ## Monitoring and recovery
 

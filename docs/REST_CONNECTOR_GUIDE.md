@@ -8,9 +8,9 @@ The BPMN models already contain these HTTP JSON connector settings. In Camunda M
 
 | Lab | Task | Method + URL | Request body | Result expression |
 |---|---|---|---|---|
-| 1 | Mock credit assessment | `POST http://localhost:8081/mock/credit-assessments` | `={"syntheticCreditScore": creditScore, "simulateFailure": simulateFailure}` | `={creditScore: response.body.creditScore, creditStatus: response.body.creditStatus}` |
-| 2 | Mock payment gateway | `POST http://localhost:8081/mock/payments` | `={"paymentToken": paymentToken, "simulateFailure": simulateFailure}` | `={paymentStatus: response.body.paymentStatus, transactionRef: response.body.transactionRef}` |
-| 3 | Mock scheduling API | `POST http://localhost:8081/mock/appointments` | `={"slotMode": slotMode, "simulateFailure": simulateFailure}` | `={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot}` |
+| 1 | Mock credit assessment | `POST http://localhost:8081/mock/credit-assessments` | `={"syntheticCreditScore": if is defined(syntheticCreditScore) then syntheticCreditScore else 700, "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={creditScore: response.body.creditScore, creditStatus: response.body.creditStatus}` |
+| 2 | Mock payment gateway | `POST http://localhost:8081/mock/payments` | `={"paymentToken": if is defined(paymentToken) then paymentToken else "OK", "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={paymentStatus: response.body.paymentStatus, transactionRef: response.body.transactionRef}` |
+| 3 | Mock scheduling API | `POST http://localhost:8081/mock/appointments` | `={"slotMode": if is defined(slotMode) then slotMode else "available", "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot, availableSlots: response.body.availableSlots, bookingStatus: response.body.bookingStatus}` |
 
 These result expressions are stored in the connector's `resultExpression` task header; do not replace them with BPMN output mappings.
 
@@ -64,5 +64,7 @@ Content-Type: application/json
 ```
 
 ```json
-{"slotAvailable":true,"slot":"2026-11-10T10:30:00+05:30"}
+{"slotAvailable":true,"availableSlot":"2026-11-10T10:30:00+05:30","availableSlots":[{"slotId":"SLOT-001","startTime":"2026-11-10T10:30:00+05:30"}],"bookingStatus":"SLOT_AVAILABLE"}
 ```
+
+The scheduling mock reports availability, not a confirmed real-world reservation. `slotMode` set to `"none"` returns `slotAvailable: false`, an empty `availableSlots` list, and `bookingStatus: "NO_SLOTS"`, which routes to staff review.

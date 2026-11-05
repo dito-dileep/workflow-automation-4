@@ -9,8 +9,16 @@
         <zeebe:taskDefinition type="validate-registration-and-availability" retries="3" />
       </bpmn:extensionElements>
       <bpmn:incoming>f1</bpmn:incoming>
-      <bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:outgoing>fValidate</bpmn:outgoing>
     </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="registration" name="Registration valid?" default="f2">
+      <bpmn:incoming>fValidate</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:outgoing>fInvalid</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="invalidRegistration" name="Request rejected — invalid registration">
+      <bpmn:incoming>fInvalid</bpmn:incoming>
+    </bpmn:endEvent>
     <bpmn:businessRuleTask id="triage" name="Classify triage urgency">
       <bpmn:extensionElements>
         <zeebe:calledDecision decisionId="triage-decision" resultVariable="triageCategory" />
@@ -50,7 +58,7 @@
           <zeebe:input source="={&quot;slotMode&quot;: if is defined(slotMode) then slotMode else &quot;available&quot;, &quot;simulateFailure&quot;: if is defined(simulateFailure) then simulateFailure else false}" target="body" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
-          <zeebe:header key="resultExpression" value="={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot}" />
+          <zeebe:header key="resultExpression" value="={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot, availableSlots: response.body.availableSlots, bookingStatus: response.body.bookingStatus}" />
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>fRoutine</bpmn:incoming>
@@ -76,7 +84,11 @@
       <bpmn:incoming>fUrgentDone</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="register" />
-    <bpmn:sequenceFlow id="f2" sourceRef="register" targetRef="triage" />
+    <bpmn:sequenceFlow id="fValidate" sourceRef="register" targetRef="registration" />
+    <bpmn:sequenceFlow id="f2" sourceRef="registration" targetRef="triage" />
+    <bpmn:sequenceFlow id="fInvalid" name="No" sourceRef="registration" targetRef="invalidRegistration">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=registrationValid = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="f3" sourceRef="triage" targetRef="category" />
     <bpmn:sequenceFlow id="fUrgent" name="Urgent" sourceRef="category" targetRef="urgentReview">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=triageCategory = "Urgent Assessment"</bpmn:conditionExpression>
@@ -98,26 +110,30 @@
     <bpmndi:BPMNPlane id="BPMNPlane_triage" bpmnElement="patient-triage">
       <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="140" y="242" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="register_di" bpmnElement="register"><dc:Bounds x="230" y="220" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="triage_di" bpmnElement="triage"><dc:Bounds x="440" y="220" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="category_di" bpmnElement="category" isMarkerVisible="true"><dc:Bounds x="660" y="235" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="urgentReview_di" bpmnElement="urgentReview"><dc:Bounds x="780" y="80" width="190" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="priorityReview_di" bpmnElement="priorityReview"><dc:Bounds x="780" y="360" width="180" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="schedule_di" bpmnElement="schedule"><dc:Bounds x="860" y="220" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="slot_di" bpmnElement="slot" isMarkerVisible="true"><dc:Bounds x="1080" y="235" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="staffReview_di" bpmnElement="staffReview"><dc:Bounds x="1180" y="360" width="190" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="booked_di" bpmnElement="booked"><dc:Bounds x="1320" y="242" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="registration_di" bpmnElement="registration" isMarkerVisible="true"><dc:Bounds x="420" y="235" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="invalidRegistration_di" bpmnElement="invalidRegistration"><dc:Bounds x="427" y="390" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="triage_di" bpmnElement="triage"><dc:Bounds x="520" y="220" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="category_di" bpmnElement="category" isMarkerVisible="true"><dc:Bounds x="740" y="235" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="urgentReview_di" bpmnElement="urgentReview"><dc:Bounds x="860" y="80" width="190" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="priorityReview_di" bpmnElement="priorityReview"><dc:Bounds x="860" y="360" width="180" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="schedule_di" bpmnElement="schedule"><dc:Bounds x="940" y="220" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="slot_di" bpmnElement="slot" isMarkerVisible="true"><dc:Bounds x="1160" y="235" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="staffReview_di" bpmnElement="staffReview"><dc:Bounds x="1260" y="360" width="190" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="booked_di" bpmnElement="booked"><dc:Bounds x="1400" y="242" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="176" y="260" /><di:waypoint x="230" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="390" y="260" /><di:waypoint x="440" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="610" y="260" /><di:waypoint x="660" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fUrgent_di" bpmnElement="fUrgent"><di:waypoint x="685" y="235" /><di:waypoint x="685" y="120" /><di:waypoint x="780" y="120" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fPriority_di" bpmnElement="fPriority"><di:waypoint x="685" y="285" /><di:waypoint x="685" y="400" /><di:waypoint x="780" y="400" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fRoutine_di" bpmnElement="fRoutine"><di:waypoint x="710" y="260" /><di:waypoint x="860" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fPriorityDone_di" bpmnElement="fPriorityDone"><di:waypoint x="960" y="400" /><di:waypoint x="945" y="400" /><di:waypoint x="945" y="300" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1030" y="260" /><di:waypoint x="1080" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fNoSlot_di" bpmnElement="fNoSlot"><di:waypoint x="1105" y="285" /><di:waypoint x="1105" y="400" /><di:waypoint x="1180" y="400" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fBooked_di" bpmnElement="fBooked"><di:waypoint x="1130" y="260" /><di:waypoint x="1320" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fStaffDone_di" bpmnElement="fStaffDone"><di:waypoint x="1370" y="400" /><di:waypoint x="1338" y="400" /><di:waypoint x="1338" y="278" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fUrgentDone_di" bpmnElement="fUrgentDone"><di:waypoint x="970" y="120" /><di:waypoint x="1338" y="120" /><di:waypoint x="1338" y="242" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fValidate_di" bpmnElement="fValidate"><di:waypoint x="390" y="260" /><di:waypoint x="420" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="470" y="260" /><di:waypoint x="500" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fInvalid_di" bpmnElement="fInvalid"><di:waypoint x="445" y="285" /><di:waypoint x="445" y="390" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="690" y="260" /><di:waypoint x="740" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fUrgent_di" bpmnElement="fUrgent"><di:waypoint x="765" y="235" /><di:waypoint x="765" y="120" /><di:waypoint x="860" y="120" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fPriority_di" bpmnElement="fPriority"><di:waypoint x="765" y="285" /><di:waypoint x="765" y="400" /><di:waypoint x="860" y="400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRoutine_di" bpmnElement="fRoutine"><di:waypoint x="790" y="260" /><di:waypoint x="940" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fPriorityDone_di" bpmnElement="fPriorityDone"><di:waypoint x="1040" y="400" /><di:waypoint x="1025" y="400" /><di:waypoint x="1025" y="300" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1110" y="260" /><di:waypoint x="1160" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fNoSlot_di" bpmnElement="fNoSlot"><di:waypoint x="1185" y="285" /><di:waypoint x="1185" y="400" /><di:waypoint x="1260" y="400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fBooked_di" bpmnElement="fBooked"><di:waypoint x="1210" y="260" /><di:waypoint x="1400" y="260" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fStaffDone_di" bpmnElement="fStaffDone"><di:waypoint x="1450" y="400" /><di:waypoint x="1418" y="400" /><di:waypoint x="1418" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fUrgentDone_di" bpmnElement="fUrgentDone"><di:waypoint x="1050" y="120" /><di:waypoint x="1418" y="120" /><di:waypoint x="1418" y="242" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

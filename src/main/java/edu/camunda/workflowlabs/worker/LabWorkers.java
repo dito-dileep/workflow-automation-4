@@ -23,8 +23,10 @@ public class LabWorkers {
     var v = job.getVariablesAsMap();
     int quantity = number(v, "quantity").intValue();
     BigDecimal unitPrice = number(v, "unitPrice");
-    boolean available = quantity > 0 && quantity <= 20 && present(v, "productId");
-    return Map.of("orderValid", present(v, "customerRef") && quantity > 0,
+    boolean valid = present(v, "customerRef") && present(v, "productId")
+        && quantity > 0 && unitPrice.compareTo(BigDecimal.ZERO) > 0;
+    boolean available = valid && quantity <= 20;
+    return Map.of("orderValid", valid,
         "stockAvailable", available, "orderTotal", unitPrice.multiply(BigDecimal.valueOf(quantity)),
         "inventoryNote", available ? "Synthetic stock reserved" : "Synthetic stock unavailable");
   }
@@ -32,13 +34,11 @@ public class LabWorkers {
   @JobWorker(type = "validate-registration-and-availability")
   public Map<String, Object> validateRegistration(ActivatedJob job) {
     var v = job.getVariablesAsMap();
-    boolean valid = present(v, "patientRef") && present(v, "appointmentPreference");
-    boolean slots = !"none".equalsIgnoreCase(String.valueOf(v.getOrDefault("slotMode", "available")));
+    boolean valid = present(v, "patientRef") && present(v, "appointmentPreference")
+        && present(v, "symptomsSummary") && present(v, "urgencyIndicator");
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("registrationValid", valid);
-    result.put("slotAvailable", slots);
-    result.put("availableSlot", slots ? "2026-11-10T10:30:00+05:30" : null);
-    result.put("registrationNote", valid ? "Synthetic registration validated" : "Patient reference or preference missing");
+    result.put("registrationNote", valid ? "Synthetic registration validated" : "Required registration input missing");
     return result;
   }
 

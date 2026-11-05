@@ -33,5 +33,7 @@
 | `symptomsSummary`, `urgencyIndicator` | String | Educational triage inputs; `RED`, `AMBER`, or other |
 | `registrationValid` | Boolean | Registration worker result |
 | `triageCategory` | String | DMN output: `Routine`, `Priority Review`, or `Urgent Assessment` |
-| `slotMode`, `slotAvailable`, `availableSlot` | String/Boolean/String | Mock scheduling request and result |
+| `slotMode` | String | Mock scheduling request: `available` or `none` |
+| `slotAvailable`, `availableSlot`, `availableSlots` | Boolean/String/List | Mock scheduling API response |
+| `bookingStatus` | String | Mock response: `SLOT_AVAILABLE` or `NO_SLOTS`; this simulation checks availability and does not reserve a real appointment |
 | `simulateFailure` | Boolean | Deliberately returns a mock HTTP 503 |

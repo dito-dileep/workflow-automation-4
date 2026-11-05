@@ -1,23 +1,27 @@
 # Test Matrix
 
-Run each row after deployment and fill the two evidence columns with the actual instance key and screenshot filename. This preserves an honest record of your own execution.
+Run each row after deployment. `Live instance` values below are runtime references from verification, not screenshot files; capture genuine Modeler, Tasklist, and Operate screenshots from your own run and add their filenames here for submission.
 
 | ID | Lab | Synthetic input / setup | Expected route | Actual result | Evidence |
 |---|---|---|---|---|---|
-| L1-01 | Loan | Income 60,000; amount 300,000; score 720 | Approved | Pending execution | — |
-| L1-02 | Loan | Missing `applicantId` | Invalid-data rejection | Pending execution | — |
-| L1-03 | Loan | Income 35,000; amount 600,000; score 640 | Manual loan review → approve | Pending execution | — |
-| L1-04 | Loan | Switch credit mock off before starting | Incident → switch mock on → retry | Pending execution | — |
-| L2-01 | Order | Qty 2; unit price 500; token `OK` | Stock → payment → fulfilment | Pending execution | — |
-| L2-02 | Order | Qty 25 | Stock unavailable end | Pending execution | — |
-| L2-03 | Order | Qty 1; token `DECLINE` | Payment declined end | Pending execution | — |
-| L2-04 | Order | Qty 2; unit price 6,000; token `OK` | Manual verification → fulfilment | Pending execution | — |
-| L2-05 | Order | Switch payment mock off before starting | Incident → switch mock on → retry | Pending execution | — |
-| L3-01 | Triage | `GREEN`; slot available | Routine → appointment booked | Pending execution | — |
-| L3-02 | Triage | `AMBER`; slot available | Priority review path → booked | Pending execution | — |
-| L3-03 | Triage | `RED` | Immediate clinical assessment | Pending execution | — |
-| L3-04 | Triage | `GREEN`; `slotMode=none` | Staff scheduling review | Pending execution | — |
-| L3-05 | Triage | Switch scheduling mock off before starting | Incident → switch mock on → retry | Pending execution | — |
+| L1-01 | Loan | Income 60,000; amount 300,000; score 720 | Approved | PASS — `creditStatus=CLEAR`; DMN `loanDecision=Approved` | Live instance `2251799813728339` (v6) |
+| L1-02 | Loan | Missing `applicantId` | Invalid-data rejection | PASS — `applicationValid=false`; completed at invalid-data end | Live instance `2251799813729143` (v6) |
+| L1-03 | Loan | Income 35,000; amount 600,000; score 640 | Manual loan review → approve | PASS — DMN `loanDecision=Manual Review`; Tasklist task created for `demo` | Live instance `2251799813728328` (v6) |
+| L1-04 | Loan | Switch credit mock off before starting | Incident → switch mock on → retry | PASS — credit incident created, mock restored, Retry completed; `loanDecision=Approved` | Live instance `2251799813729523` (v6) |
+| L1-05 | Loan | Income 25,000; amount 900,000; score 550 | DMN `Rejected` end | PASS — DMN `loanDecision=Rejected`; completed | Live instance `2251799813728879` (v6) |
+| L2-01 | Order | Qty 2; unit price 500; token `OK` | Stock → DMN `P3` → payment → fulfilment | PASS — `orderTotal=1000`, `deliveryPriority=P3`, `paymentStatus=APPROVED`; completed | Live instance `2251799813728364` (v6) |
+| L2-02 | Order | Qty 25 | Stock unavailable end | PASS — `stockAvailable=false`; completed without payment | Live instance `2251799813728903` (v6) |
+| L2-03 | Order | Qty 1; token `DECLINE` | Payment declined end | PASS — `paymentStatus=DECLINED`; completed at declined end | Live instance `2251799813728926` (v6) |
+| L2-04 | Order | Qty 2; unit price 6,000; category `GOLD`; preference `EXPRESS`; token `OK` | DMN returns `P1` → manual verification → fulfilment | PASS — `orderTotal=12000`, DMN `deliveryPriority=P1`; Tasklist task created for `demo` | Live instance `2251799813728350` (v6) |
+| L2-05 | Order | Switch payment mock off before starting | Incident → switch mock on → retry | PASS — payment incident created, mock restored, Retry completed; `paymentStatus=APPROVED` | Live instance `2251799813729547` (v6) |
+| L2-06 | Order | Missing `productId` or quantity 0 | Invalid-order end before stock/DMN/payment | PASS — `orderValid=false`; completed at invalid-order end | Live instance `2251799813728378` (v6) |
+| L2-07 | Order | Qty 1; unit price 2,500; preference `EXPRESS`; token `OK` | DMN returns `P2` → manual verification → fulfilment | PASS — `orderTotal=2500`, DMN `deliveryPriority=P2`; Tasklist task created for `demo` | Live instance `2251799813729160` (v6) |
+| L3-01 | Triage | `GREEN`; slot available | DMN returns `Routine` → slot available | PASS — `triageCategory=Routine`, `bookingStatus=SLOT_AVAILABLE`; completed | Live instance `2251799813728973` (v6) |
+| L3-02 | Triage | `AMBER`; slot available | DMN returns `Priority Review` → staff review → slot available | PASS — DMN `triageCategory=Priority Review`; Tasklist task created for `demo` | Live instance `2251799813728459` (v6) |
+| L3-03 | Triage | `RED` | Immediate clinical assessment | PASS — DMN `triageCategory=Urgent Assessment`; Tasklist task created for `demo` | Live instance `2251799813729005` (v6) |
+| L3-04 | Triage | `GREEN`; `slotMode=none` | Staff scheduling review | PASS — `availableSlots=[]`, `bookingStatus=NO_SLOTS`; Tasklist task created for `demo` | Live instance `2251799813728502` (v6) |
+| L3-05 | Triage | Switch scheduling mock off before starting | Incident → switch mock on → retry | PASS — scheduling incident created, mock restored, Retry completed; `bookingStatus=SLOT_AVAILABLE` | Live instance `2251799813729583` (v6) |
+| L3-06 | Triage | Missing patient reference or urgency indicator | Invalid-registration end before DMN/scheduling | PASS — `registrationValid=false`; completed before DMN/scheduling | Live instance `2251799813728516` (v6) |
 
 ## Starting instances
 
@@ -44,7 +48,7 @@ $body = '{"processDefinitionId":"patient-triage","variables":{"patientRef":"PAT-
 Invoke-RestMethod -Uri 'http://localhost:8080/v2/process-instances' -Method Post -ContentType 'application/json' -Body $body
 ```
 
-For Tasklist demonstrations, use the corresponding branch inputs from the test matrix: Lab 1 manual review (income `35000`, amount `600000`, score `640`); Lab 2 verification (quantity `2`, unit price `6000`, category `GOLD`, preference `EXPRESS`); Lab 3 priority review (`AMBER`) or clinical assessment (`RED`).
+For Tasklist demonstrations, use the corresponding branch inputs from the test matrix: Lab 1 manual review (income `35000`, amount `600000`, score `640`); Lab 2 verification (quantity `2`, unit price `6000`, category `GOLD`, preference `EXPRESS`, which gives DMN priority `P1`); Lab 3 priority review (`AMBER`) or clinical assessment (`RED`). The [Presentation Guide](PRESENTATION_GUIDE.md) explains how to inspect the submitted inputs and DMN outputs.
 
 ## Incident setup
 

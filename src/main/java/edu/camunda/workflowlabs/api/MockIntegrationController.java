@@ -1,6 +1,7 @@
 package edu.camunda.workflowlabs.api;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.http.HttpStatus;
@@ -68,6 +69,10 @@ public class MockIntegrationController {
     response.put("slotAvailable", available);
     response.put("availableSlot", available ? "2026-11-10T10:30:00+05:30" : null);
     response.put("slot", available ? "2026-11-10T10:30:00+05:30" : null);
+    response.put("availableSlots", available
+        ? List.of(Map.of("slotId", "SLOT-001", "startTime", "2026-11-10T10:30:00+05:30"))
+        : List.of());
+    response.put("bookingStatus", available ? "SLOT_AVAILABLE" : "NO_SLOTS");
     return ResponseEntity.ok(response);
   }
 

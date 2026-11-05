@@ -11,8 +11,16 @@
       <bpmn:incoming>f1</bpmn:incoming>
       <bpmn:outgoing>f2</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="availability" name="Stock available?" default="f4">
+    <bpmn:exclusiveGateway id="orderValid" name="Order valid?" default="f2Valid">
       <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f2Valid</bpmn:outgoing>
+      <bpmn:outgoing>fInvalid</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="invalidOrder" name="Stopped — invalid order">
+      <bpmn:incoming>fInvalid</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="availability" name="Stock available?" default="f4">
+      <bpmn:incoming>f2Valid</bpmn:incoming>
       <bpmn:outgoing>f3</bpmn:outgoing>
       <bpmn:outgoing>f4</bpmn:outgoing>
     </bpmn:exclusiveGateway>
@@ -50,7 +58,7 @@
     <bpmn:endEvent id="declined" name="Stopped — payment declined">
       <bpmn:incoming>f7</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:exclusiveGateway id="reviewNeeded" name="High-value order?" default="f10">
+    <bpmn:exclusiveGateway id="reviewNeeded" name="Priority review required?" default="f10">
       <bpmn:incoming>f8</bpmn:incoming>
       <bpmn:outgoing>f9</bpmn:outgoing>
       <bpmn:outgoing>f10</bpmn:outgoing>
@@ -68,7 +76,11 @@
       <bpmn:incoming>f11</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="stock" />
-    <bpmn:sequenceFlow id="f2" sourceRef="stock" targetRef="availability" />
+    <bpmn:sequenceFlow id="f2" sourceRef="stock" targetRef="orderValid" />
+    <bpmn:sequenceFlow id="f2Valid" sourceRef="orderValid" targetRef="availability" />
+    <bpmn:sequenceFlow id="fInvalid" name="No" sourceRef="orderValid" targetRef="invalidOrder">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=orderValid = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="f3" name="No" sourceRef="availability" targetRef="outOfStock">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=stockAvailable = false</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
@@ -80,7 +92,7 @@
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="f8" name="Approved" sourceRef="paid" targetRef="reviewNeeded" />
     <bpmn:sequenceFlow id="f9" name="Yes" sourceRef="reviewNeeded" targetRef="review">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=orderTotal &gt;= 10000</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=deliveryPriority = "P1" or deliveryPriority = "P2"</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="f10" name="No" sourceRef="reviewNeeded" targetRef="fulfilled" />
     <bpmn:sequenceFlow id="f11" sourceRef="review" targetRef="fulfilled" />
@@ -89,26 +101,30 @@
     <bpmndi:BPMNPlane id="BPMNPlane_order" bpmnElement="order-fulfilment">
       <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="140" y="212" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="stock_di" bpmnElement="stock"><dc:Bounds x="230" y="190" width="180" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="availability_di" bpmnElement="availability" isMarkerVisible="true"><dc:Bounds x="460" y="205" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="outOfStock_di" bpmnElement="outOfStock"><dc:Bounds x="467" y="370" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="priority_di" bpmnElement="priority"><dc:Bounds x="560" y="190" width="180" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="790" y="190" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="paid_di" bpmnElement="paid" isMarkerVisible="true"><dc:Bounds x="1010" y="205" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="declined_di" bpmnElement="declined"><dc:Bounds x="1017" y="370" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="reviewNeeded_di" bpmnElement="reviewNeeded" isMarkerVisible="true"><dc:Bounds x="1120" y="205" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="review_di" bpmnElement="review"><dc:Bounds x="1230" y="300" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="fulfilled_di" bpmnElement="fulfilled"><dc:Bounds x="1420" y="212" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="orderValid_di" bpmnElement="orderValid" isMarkerVisible="true"><dc:Bounds x="450" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="invalidOrder_di" bpmnElement="invalidOrder"><dc:Bounds x="457" y="370" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="availability_di" bpmnElement="availability" isMarkerVisible="true"><dc:Bounds x="560" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="outOfStock_di" bpmnElement="outOfStock"><dc:Bounds x="567" y="370" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="priority_di" bpmnElement="priority"><dc:Bounds x="660" y="190" width="180" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="890" y="190" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="paid_di" bpmnElement="paid" isMarkerVisible="true"><dc:Bounds x="1110" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="declined_di" bpmnElement="declined"><dc:Bounds x="1117" y="370" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reviewNeeded_di" bpmnElement="reviewNeeded" isMarkerVisible="true"><dc:Bounds x="1220" y="205" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_di" bpmnElement="review"><dc:Bounds x="1330" y="300" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="fulfilled_di" bpmnElement="fulfilled"><dc:Bounds x="1520" y="212" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="176" y="230" /><di:waypoint x="230" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="410" y="230" /><di:waypoint x="460" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="485" y="255" /><di:waypoint x="485" y="370" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="510" y="230" /><di:waypoint x="560" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5"><di:waypoint x="740" y="230" /><di:waypoint x="790" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="960" y="230" /><di:waypoint x="1010" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7"><di:waypoint x="1035" y="255" /><di:waypoint x="1035" y="370" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8"><di:waypoint x="1060" y="230" /><di:waypoint x="1120" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9"><di:waypoint x="1145" y="255" /><di:waypoint x="1145" y="340" /><di:waypoint x="1230" y="340" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10"><di:waypoint x="1170" y="230" /><di:waypoint x="1420" y="230" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11"><di:waypoint x="1400" y="340" /><di:waypoint x="1438" y="340" /><di:waypoint x="1438" y="248" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="410" y="230" /><di:waypoint x="450" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2Valid_di" bpmnElement="f2Valid"><di:waypoint x="500" y="230" /><di:waypoint x="560" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fInvalid_di" bpmnElement="fInvalid"><di:waypoint x="475" y="255" /><di:waypoint x="475" y="370" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="585" y="255" /><di:waypoint x="585" y="370" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="610" y="230" /><di:waypoint x="660" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5"><di:waypoint x="840" y="230" /><di:waypoint x="890" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1060" y="230" /><di:waypoint x="1110" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7"><di:waypoint x="1135" y="255" /><di:waypoint x="1135" y="370" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8"><di:waypoint x="1160" y="230" /><di:waypoint x="1220" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9"><di:waypoint x="1245" y="255" /><di:waypoint x="1245" y="340" /><di:waypoint x="1330" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10"><di:waypoint x="1270" y="230" /><di:waypoint x="1520" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11"><di:waypoint x="1500" y="340" /><di:waypoint x="1538" y="340" /><di:waypoint x="1538" y="248" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

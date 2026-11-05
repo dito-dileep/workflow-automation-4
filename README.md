@@ -65,7 +65,7 @@ BPMN_Exercise_4/
 
 - Java 21
 - [Camunda 8 Run 8.8](https://downloads.camunda.cloud/release/camunda/c8run/8.8/) already unzipped
-- Maven 3.9+, available on this machine at `C:\Users\ditod\Downloads\apache-maven-3.9.9`
+- Maven 3.9+; the installed copy on this machine is `C:\Users\ditod\Downloads\apache-maven-3.10.0`
 
 ### 2. Start Camunda, then the worker
 
@@ -84,7 +84,7 @@ Terminal 2, in PowerShell:
 
 ```powershell
 Set-Location "$HOME\OneDrive\Desktop\dataset\BPMN_Exercise_4"
-& "$HOME\Downloads\apache-maven-3.9.9\bin\mvn.cmd" spring-boot:run
+& "$HOME\Downloads\apache-maven-3.10.0\bin\mvn.cmd" spring-boot:run
 ```
 
 The application deploys the models and exposes the synthetic APIs at `http://localhost:8081/mock/*`. Leave both terminals open during the demo.
@@ -114,7 +114,7 @@ Orders with unavailable stock or declined payment end cleanly. High-value orders
 <details>
 <summary><b>03 · Hospital appointment & triage</b></summary>
 
-`Validate registration → educational DMN triage → mock scheduling → book / staff review`
+`Validate registration → valid-registration gateway → educational DMN triage → mock scheduling → available / staff review`
 
 `RED` cases go immediately to clinical assessment. No available slot creates a scheduling-review task. This is an educational workflow only—not medical advice or clinical decision support.
 </details>
@@ -126,6 +126,7 @@ Orders with unavailable stock or declined payment end cleanly. High-value orders
 - [REST connector guide](docs/REST_CONNECTOR_GUIDE.md) — connector configuration and request/response examples
 - [Test matrix](docs/TEST_MATRIX.md) — required normal, exception, and recovery scenarios
 - [Evidence and screenshots](evidence/README.md) — genuine Operate screenshots for all three labs and remaining evidence checklist
+- [Presentation guide](docs/PRESENTATION_GUIDE.md) — exact sample inputs, DMN rule results, and where to show them in Modeler, Operate, and Tasklist
 
 ## Incident recovery demo
 
