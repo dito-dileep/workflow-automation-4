@@ -62,11 +62,25 @@ For **each decision task**:
 
 R badges belong on the REST service tasks. DMN decision tasks correctly use the business-rule/table symbol; do not turn those into REST calls.
 
+Open the models from this project directory:
+
+```text
+C:\Users\ditod\OneDrive\Desktop\dataset\BPMN_Exercise_4\src\main\resources\models
+```
+
+Do not use the older extracted `C:\Users\ditod\Downloads\workflow-automation-4-main` copy shown in the previous screenshot. Its BPMN files are from a different project version and do not have these connector-template settings.
+
+The supplied Operate screenshots show historical loan process versions 1–4. For current evidence, select deployed version 8; use the BPMN files above to show the latest connector configurations.
+
+### Start inputs are not the calculated results
+
+When creating an instance, provide only the process inputs listed for that lab. Do not send `paymentStatus`, `orderValid`, `stockAvailable`, `orderTotal`, `applicationValid`, `creditScore`, `loanDecision`, `registrationValid`, or `triageCategory`. The REST Connector or DMN task creates these values while the process runs. Operate's Variables panel lists both inputs and results together, so a displayed `paymentStatus="APPROVED"` is the payment API's response—not a value entered at startup.
+
 ## Lab 1 — Loan approval
 
 **Process inputs:** `applicantId`, `monthlyIncome`, `requestedAmount`, `syntheticCreditScore`.
 
-1. Validation REST task checks the ID and positive income/amount, returning `applicationValid`.
+1. Validation REST task checks the ID, positive income/amount, and required synthetic score (300–850), returning `applicationValid`.
 2. Credit REST task returns `creditScore` and `creditStatus`.
 3. The loan DMN evaluates `monthlyIncome`, `requestedAmount`, and returned `creditScore`. The BPMN gateway routes the resulting `loanDecision`.
 
@@ -86,11 +100,11 @@ Expected: validation passes, `creditScore=640`, `creditStatus=REFER`, and the DM
 
 ## Lab 2 — E-commerce order fulfilment
 
-**Process inputs:** `customerRef`, `productId`, `quantity`, `unitPrice`, `customerCategory`, `deliveryPreference`, `paymentToken`.
+**Process inputs:** `customerRef`, `productId`, `quantity`, `unitPrice`, `customerCategory`, `deliveryPreference`, and `paymentToken` (`OK` or `DECLINE`).
 
-1. The first REST task validates the order, calculates `orderTotal = quantity × unitPrice`, and returns whether stock is available (the synthetic stock limit is 20).
+1. The first REST task validates the order and required payment token, calculates `orderTotal = quantity × unitPrice`, and returns whether stock is available (the synthetic stock limit is 20). The process does not accept `orderValid`, `stockAvailable`, or `orderTotal` as inputs.
 2. The order DMN evaluates `orderTotal`, `customerCategory`, and `deliveryPreference`.
-3. The payment REST task returns `paymentStatus`; approved P1/P2 orders go through manual verification.
+3. The payment REST task calculates `paymentStatus` from the supplied token: `OK` returns `APPROVED`, while `DECLINE` returns `DECLINED`. The process does not accept `paymentStatus` as an input; approved P1/P2 orders go through manual verification.
 
 **DMN rules:** P1 if total is at least `5000`, category is `GOLD`, and preference is `EXPRESS`; P2 if total is at least `2000` and preference is `EXPRESS`; P3 otherwise.
 
@@ -108,7 +122,7 @@ Expected: `orderTotal=12000`, stock available, DMN `deliveryPriority=P1`, and pa
 
 ## Lab 3 — Patient appointment and triage
 
-**Process inputs:** `patientRef`, `appointmentPreference`, `symptomsSummary`, `urgencyIndicator`, `slotMode`.
+**Process inputs:** `patientRef`, `appointmentPreference`, `symptomsSummary`, `urgencyIndicator`, and required `slotMode` (`available` or `none`).
 
 1. The first REST task validates the registration and returns `registrationValid`.
 2. The triage DMN evaluates `urgencyIndicator` and `symptomsSummary`, returning `triageCategory`.

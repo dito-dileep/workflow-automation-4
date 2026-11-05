@@ -38,14 +38,16 @@ public class MockIntegrationController {
 
   @PostMapping("/validations/loan")
   public Map<String, Object> validateLoan(@RequestBody Map<String, Object> request) {
+    Integer score = integerOrNull(request.get("syntheticCreditScore"));
     boolean valid = hasText(request, "applicantId")
         && isPositiveNumber(request.get("monthlyIncome"))
-        && isPositiveNumber(request.get("requestedAmount"));
+        && isPositiveNumber(request.get("requestedAmount"))
+        && score != null && score >= 300 && score <= 850;
     return Map.of(
         "applicationValid", valid,
         "validationNote", valid
-            ? "Synthetic applicant and financial inputs validated"
-            : "Applicant ID, positive monthly income, and positive requested amount are required");
+            ? "Synthetic applicant, financial inputs, and credit score validated"
+            : "Applicant ID, positive monthly income, positive requested amount, and a credit score from 300 to 850 are required");
   }
 
   @PostMapping("/validations/order")
@@ -53,26 +55,28 @@ public class MockIntegrationController {
     int quantity = integerOrZero(request.get("quantity"));
     BigDecimal unitPrice = decimalOrZero(request.get("unitPrice"));
     boolean valid = hasText(request, "customerRef") && hasText(request, "productId")
-        && quantity > 0 && unitPrice.signum() > 0;
+        && quantity > 0 && unitPrice.signum() > 0
+        && isPaymentToken(request.get("paymentToken"));
     boolean available = valid && quantity <= 20;
     return Map.of(
         "orderValid", valid,
         "stockAvailable", available,
         "orderTotal", valid ? unitPrice.multiply(BigDecimal.valueOf(quantity)) : BigDecimal.ZERO,
         "inventoryNote", !valid
-            ? "Required order inputs are missing or invalid"
+            ? "Customer and product references, positive quantity and price, and paymentToken OK or DECLINE are required"
             : available ? "Synthetic stock reserved" : "Synthetic stock unavailable");
   }
 
   @PostMapping("/validations/registration")
   public Map<String, Object> validateRegistration(@RequestBody Map<String, Object> request) {
     boolean valid = hasText(request, "patientRef") && hasText(request, "appointmentPreference")
-        && hasText(request, "symptomsSummary") && hasText(request, "urgencyIndicator");
+        && hasText(request, "symptomsSummary") && hasText(request, "urgencyIndicator")
+        && isSlotMode(request.get("slotMode"));
     return Map.of(
         "registrationValid", valid,
         "registrationNote", valid
             ? "Synthetic registration validated"
-            : "Patient reference, appointment preference, symptoms summary, and urgency indicator are required");
+            : "Patient reference, appointment preference, symptoms summary, urgency indicator, and slotMode available or none are required");
   }
 
   /** Example: /mock/controls/credit?down=true then later ?down=false before retrying the job. */
@@ -90,21 +94,32 @@ public class MockIntegrationController {
   @PostMapping("/credit-assessments")
   public ResponseEntity<?> credit(@RequestBody Map<String, Object> request) {
     if (creditDown.get() || Boolean.TRUE.equals(request.get("simulateFailure"))) return failure();
-    int score = Integer.parseInt(String.valueOf(request.getOrDefault("syntheticCreditScore", 700)));
+    Integer score = integerOrNull(request.get("syntheticCreditScore"));
+    if (score == null || score < 300 || score > 850) {
+      return ResponseEntity.badRequest().body(Map.of("error", "syntheticCreditScore must be an integer from 300 to 850"));
+    }
     return ResponseEntity.ok(Map.of("creditScore", score, "creditStatus", score >= 650 ? "CLEAR" : "REFER"));
   }
 
   @PostMapping("/payments")
   public ResponseEntity<?> payment(@RequestBody Map<String, Object> request) {
     if (paymentDown.get() || Boolean.TRUE.equals(request.get("simulateFailure"))) return failure();
-    boolean approved = !"DECLINE".equalsIgnoreCase(String.valueOf(request.getOrDefault("paymentToken", "OK")));
+    Object token = request.get("paymentToken");
+    if (!isPaymentToken(token)) {
+      return ResponseEntity.badRequest().body(Map.of("error", "paymentToken must be OK or DECLINE"));
+    }
+    boolean approved = "OK".equalsIgnoreCase(String.valueOf(token));
     return ResponseEntity.ok(Map.of("paymentStatus", approved ? "APPROVED" : "DECLINED", "transactionRef", "MOCK-" + System.currentTimeMillis()));
   }
 
   @PostMapping("/appointments")
   public ResponseEntity<?> appointment(@RequestBody Map<String, Object> request) {
     if (schedulingDown.get() || Boolean.TRUE.equals(request.get("simulateFailure"))) return failure();
-    boolean available = !"none".equalsIgnoreCase(String.valueOf(request.getOrDefault("slotMode", "available")));
+    Object mode = request.get("slotMode");
+    if (!isSlotMode(mode)) {
+      return ResponseEntity.badRequest().body(Map.of("error", "slotMode must be available or none"));
+    }
+    boolean available = "available".equalsIgnoreCase(String.valueOf(mode));
     Map<String, Object> response = new LinkedHashMap<>();
     response.put("slotAvailable", available);
     response.put("availableSlot", available ? "2026-11-10T10:30:00+05:30" : null);
@@ -156,5 +171,26 @@ public class MockIntegrationController {
     } catch (NumberFormatException | ArithmeticException exception) {
       return 0;
     }
+  }
+
+  private Integer integerOrNull(Object value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      return new BigDecimal(String.valueOf(value)).intValueExact();
+    } catch (NumberFormatException | ArithmeticException exception) {
+      return null;
+    }
+  }
+
+  private boolean isPaymentToken(Object value) {
+    return value != null && ("OK".equalsIgnoreCase(String.valueOf(value))
+        || "DECLINE".equalsIgnoreCase(String.valueOf(value)));
+  }
+
+  private boolean isSlotMode(Object value) {
+    return value != null && ("available".equalsIgnoreCase(String.valueOf(value))
+        || "none".equalsIgnoreCase(String.valueOf(value)));
   }
 }

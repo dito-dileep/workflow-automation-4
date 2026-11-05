@@ -1,29 +1,29 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Triage" targetNamespace="http://camunda.io/labs">
+<?xml version='1.0' encoding='UTF-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_Triage" targetNamespace="http://camunda.io/labs" exporter="Camunda Modeler" exporterVersion="5.49.0">
   <bpmn:process id="patient-triage" name="Lab 3 — Hospital Appointment and Triage" isExecutable="true">
     <bpmn:startEvent id="start" name="Request received">
       <bpmn:outgoing>f1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:serviceTask id="register" name="Validate registration via REST API" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="13" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjAzMzUgOC45OTk5N0MxNy4wMzM1IDEzLjQ0NzUgMTMuNDI4MSAxNy4wNTI5IDguOTgwNjUgMTcuMDUyOUM0LjUzMzE2IDE3LjA1MjkgMC45Mjc3NjUgMTMuNDQ3NSAwLjkyNzc2NSA4Ljk5OTk3QzAuOTI3NzY1IDQuNTUyNDggNC41MzMxNiAwLjk0NzA4MyA4Ljk4MDY1IDAuOTQ3MDgzQzEzLjQyODEgMC45NDcwODMgMTcuMDMzNSA0LjU1MjQ4IDE3LjAzMzUgOC45OTk5N1oiIGZpbGw9IiM1MDU1NjIiLz4KPHBhdGggZD0iTTQuOTMxMjYgMTQuMTU3MUw2Ljc4MTA2IDMuNzE0NzFIMTAuMTM3NUMxMS4xOTE3IDMuNzE0NzEgMTEuOTgyNCAzLjk4MzIzIDEyLjUwOTUgNC41MjAyN0MxMy4wNDY1IDUuMDQ3MzYgMTMuMzE1IDUuNzMzNTggMTMuMzE1IDYuNTc4OTJDMTMuMzE1IDcuNDQ0MTQgMTMuMDcxNCA4LjE1NTIyIDEyLjU4NDEgOC43MTIxNUMxMi4xMDY3IDkuMjU5MTMgMTEuNDU1MyA5LjYzNzA1IDEwLjYyOTggOS44NDU5TDEyLjA2MTkgMTQuMTU3MUgxMC4zMzE1TDkuMDMzNjQgMTAuMDI0OUg3LjI0MzUxTDYuNTEyNTQgMTQuMTU3MUg0LjkzMTI2Wk03LjQ5NzExIDguNTkyODFIOS4yNDI0OEM5Ljk5ODMyIDguNTkyODEgMTAuNTkwMSA4LjQyMzc0IDExLjAxNzcgOC4wODU2MUMxMS40NTUzIDcuNzM3NTMgMTEuNjc0MSA3LjI2NTEzIDExLjY3NDEgNi42Njg0MkMxMS42NzQxIDYuMTkxMDYgMTEuNTI0OSA1LjgxODExIDExLjIyNjUgNS41NDk1OUMxMC45MjgyIDUuMjcxMTMgMTAuNDU1OCA1LjEzMTkgOS44MDkzNiA1LjEzMTlIOC4xMDg3NEw3LjQ5NzExIDguNTkyODFaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="1" />
+        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="1"/>
         <zeebe:ioMapping>
-          <zeebe:input source="POST" target="method" />
-          <zeebe:input source="=&#34;http://localhost:8081/mock/validations/registration&#34;" target="url" />
-          <zeebe:input source="noAuth" target="authentication.type" />
-          <zeebe:input source="={}" target="headers" />
-          <zeebe:input source="={}" target="queryParameters" />
-          <zeebe:input source="={patientRef: if is defined(patientRef) then patientRef else null, appointmentPreference: if is defined(appointmentPreference) then appointmentPreference else null, symptomsSummary: if is defined(symptomsSummary) then symptomsSummary else null, urgencyIndicator: if is defined(urgencyIndicator) then urgencyIndicator else null}" target="body" />
-          <zeebe:input source="=false" target="storeResponse" />
-          <zeebe:input source="=false" target="followRedirects" />
-          <zeebe:input source="=20" target="connectionTimeoutInSeconds" />
-          <zeebe:input source="=20" target="readTimeoutInSeconds" />
+          <zeebe:input source="POST" target="method"/>
+          <zeebe:input source="=&quot;http://localhost:8081/mock/validations/registration&quot;" target="url"/>
+          <zeebe:input source="noAuth" target="authentication.type"/>
+          <zeebe:input source="={}" target="headers"/>
+          <zeebe:input source="={}" target="queryParameters"/>
+          <zeebe:input source="={patientRef: if is defined(patientRef) then patientRef else null, appointmentPreference: if is defined(appointmentPreference) then appointmentPreference else null, symptomsSummary: if is defined(symptomsSummary) then symptomsSummary else null, urgencyIndicator: if is defined(urgencyIndicator) then urgencyIndicator else null, slotMode: if is defined(slotMode) then slotMode else null}" target="body"/>
+          <zeebe:input source="=false" target="storeResponse"/>
+          <zeebe:input source="=false" target="followRedirects"/>
+          <zeebe:input source="=20" target="connectionTimeoutInSeconds"/>
+          <zeebe:input source="=20" target="readTimeoutInSeconds"/>
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
-          <zeebe:header key="elementTemplateVersion" value="13" />
-          <zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2" />
-          <zeebe:header key="resultExpression" value="={registrationValid: response.body.registrationValid, registrationNote: response.body.registrationNote}" />
-          <zeebe:header key="retryBackoff" value="PT0S" />
+          <zeebe:header key="elementTemplateVersion" value="13"/>
+          <zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2"/>
+          <zeebe:header key="resultExpression" value="={registrationValid: response.body.registrationValid, registrationNote: response.body.registrationNote}"/>
+          <zeebe:header key="retryBackoff" value="PT0S"/>
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>f1</bpmn:incoming>
@@ -37,9 +37,9 @@
     <bpmn:endEvent id="invalidRegistration" name="Request rejected — invalid registration">
       <bpmn:incoming>fInvalid</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:businessRuleTask id="triage" name="Calculate triage category from input values">
+    <bpmn:businessRuleTask id="triage" name="Classify triage urgency">
       <bpmn:extensionElements>
-        <zeebe:calledDecision decisionId="triage-decision" resultVariable="triageCategory" />
+        <zeebe:calledDecision decisionId="triage-decision" resultVariable="triageCategory"/>
       </bpmn:extensionElements>
       <bpmn:incoming>f2</bpmn:incoming>
       <bpmn:outgoing>f3</bpmn:outgoing>
@@ -52,40 +52,40 @@
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="urgentReview" name="Immediate clinical assessment">
       <bpmn:extensionElements>
-        <zeebe:userTask />
-        <zeebe:assignmentDefinition assignee="demo" />
+        <zeebe:userTask/>
+        <zeebe:assignmentDefinition assignee="demo"/>
       </bpmn:extensionElements>
       <bpmn:incoming>fUrgent</bpmn:incoming>
       <bpmn:outgoing>fUrgentDone</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="priorityReview" name="Priority staff review">
       <bpmn:extensionElements>
-        <zeebe:userTask />
-        <zeebe:assignmentDefinition assignee="demo" />
+        <zeebe:userTask/>
+        <zeebe:assignmentDefinition assignee="demo"/>
       </bpmn:extensionElements>
       <bpmn:incoming>fPriority</bpmn:incoming>
       <bpmn:outgoing>fPriorityDone</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:serviceTask id="schedule" name="Mock scheduling API" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="13" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjAzMzUgOC45OTk5N0MxNy4wMzM1IDEzLjQ0NzUgMTMuNDI4MSAxNy4wNTI5IDguOTgwNjUgMTcuMDUyOUM0LjUzMzE2IDE3LjA1MjkgMC45Mjc3NjUgMTMuNDQ3NSAwLjkyNzc2NSA4Ljk5OTk3QzAuOTI3NzY1IDQuNTUyNDggNC41MzMxNiAwLjk0NzA4MyA4Ljk4MDY1IDAuOTQ3MDgzQzEzLjQyODEgMC45NDcwODMgMTcuMDMzNSA0LjU1MjQ4IDE3LjAzMzUgOC45OTk5N1oiIGZpbGw9IiM1MDU1NjIiLz4KPHBhdGggZD0iTTQuOTMxMjYgMTQuMTU3MUw2Ljc4MTA2IDMuNzE0NzFIMTAuMTM3NUMxMS4xOTE3IDMuNzE0NzEgMTEuOTgyNCAzLjk4MzIzIDEyLjUwOTUgNC41MjAyN0MxMy4wNDY1IDUuMDQ3MzYgMTMuMzE1IDUuNzMzNTggMTMuMzE1IDYuNTc4OTJDMTMuMzE1IDcuNDQ0MTQgMTMuMDcxNCA4LjE1NTIyIDEyLjU4NDEgOC43MTIxNUMxMi4xMDY3IDkuMjU5MTMgMTEuNDU1MyA5LjYzNzA1IDEwLjYyOTggOS44NDU5TDEyLjA2MTkgMTQuMTU3MUgxMC4zMzE1TDkuMDMzNjQgMTAuMDI0OUg3LjI0MzUxTDYuNTEyNTQgMTQuMTU3MUg0LjkzMTI2Wk03LjQ5NzExIDguNTkyODFIOS4yNDI0OEM5Ljk5ODMyIDguNTkyODEgMTAuNTkwMSA4LjQyMzc0IDExLjAxNzcgOC4wODU2MUMxMS40NTUzIDcuNzM3NTMgMTEuNjc0MSA3LjI2NTEzIDExLjY3NDEgNi42Njg0MkMxMS42NzQxIDYuMTkxMDYgMTEuNTI0OSA1LjgxODExIDExLjIyNjUgNS41NDk1OUMxMC45MjgyIDUuMjcxMTMgMTAuNDU1OCA1LjEzMTkgOS44MDkzNiA1LjEzMTlIOC4xMDg3NEw3LjQ5NzExIDguNTkyODFaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
+    <bpmn:serviceTask id="schedule" name="Mock scheduling API via REST API" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="13" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjAzMzUgOC45OTk5N0MxNy4wMzM1IDEzLjQ0NzUgMTMuNDI4MSAxNy4wNTI5IDguOTgwNjUgMTcuMDUyOUM0LjUzMzE2IDE3LjA1MjkgMC45Mjc3NjUgMTMuNDQ3NSAwLjkyNzc2NSA4Ljk5OTk3QzAuOTI3NzY1IDQuNTUyNDggNC41MzMxNiAwLjk0NzA4MyA4Ljk4MDY1IDAuOTQ3MDgzQzEzLjQyODEgMC45NDcwODMgMTcuMDMzNSA0LjU1MjQ4IDE3LjAzMzUgOC45OTk5N1oiIGZpbGw9IiM1MDU1NjIiLz4KPHBhdGggZD0iTTQuOTMxMjYgMTQuMTU3MUw2Ljc4MTA2IDMuNzE0NzFIMTAuMTM3NUMxMS4xOTE3IDMuNzE0NzEgMTEuOTgyNCAzLjk4MzIzIDEyLjUwOTUgNC41MjAyN0MxMy4wNDY1IDUuMDQ3MzYgMTMuMzE1IDUuNzMzNTggMTMuMzE1IDYuNTc4OTJDMTMuMzE1IDcuNDQ0MTQgMTMuMDcxNCA4LjE1NTIyIDEyLjU4NDEgOC43MTIxNUMxMi4xMDY3IDkuMjU5MTMgMTEuNDU1MyA5LjYzNzA1IDEwLjYyOTggOS44NDU5TDEyLjA2MTkgMTQuMTU3MUgxMC4zMzE1TDkuMDMzNjQgMTAuMDI0OUg3LjI0MzUxTDYuNTEyNTQgMTQuMTU3MUg0LjkzMTI2Wk03LjQ5NzExIDguNTkyODFIOS4yNDI0OEM5Ljk5ODMyIDguNTkyODEgMTAuNTkwMSA4LjQyMzc0IDExLjAxNzcgOC4wODU2MUMxMS40NTUzIDcuNzM3NTMgMTEuNjc0MSA3LjI2NTEzIDExLjY3NDEgNi42Njg0MkMxMS42NzQxIDYuMTkxMDYgMTEuNTI0OSA1LjgxODExIDExLjIyNjUgNS41NDk1OUMxMC45MjgyIDUuMjcxMTMgMTAuNDU1OCA1LjEzMTkgOS44MDkzNiA1LjEzMTlIOC4xMDg3NEw3LjQ5NzExIDguNTkyODFaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="1" />
+        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="1"/>
         <zeebe:ioMapping>
-          <zeebe:input source="POST" target="method" />
-          <zeebe:input source="=&quot;http://localhost:8081/mock/appointments&quot;" target="url" />
-          <zeebe:input source="noAuth" target="authentication.type" />
-          <zeebe:input source="={}" target="headers" />
-          <zeebe:input source="={}" target="queryParameters" />
-          <zeebe:input source="={&quot;slotMode&quot;: if is defined(slotMode) then slotMode else &quot;available&quot;, &quot;simulateFailure&quot;: if is defined(simulateFailure) then simulateFailure else false}" target="body" />
-          <zeebe:input source="=false" target="storeResponse" />
-          <zeebe:input source="=false" target="followRedirects" />
-          <zeebe:input source="=20" target="connectionTimeoutInSeconds" />
-          <zeebe:input source="=20" target="readTimeoutInSeconds" />
+          <zeebe:input source="POST" target="method"/>
+          <zeebe:input source="=&quot;http://localhost:8081/mock/appointments&quot;" target="url"/>
+          <zeebe:input source="noAuth" target="authentication.type"/>
+          <zeebe:input source="={}" target="headers"/>
+          <zeebe:input source="={}" target="queryParameters"/>
+          <zeebe:input source="={slotMode: if is defined(slotMode) then slotMode else null, simulateFailure: if is defined(simulateFailure) then simulateFailure else false}" target="body"/>
+          <zeebe:input source="=false" target="storeResponse"/>
+          <zeebe:input source="=false" target="followRedirects"/>
+          <zeebe:input source="=20" target="connectionTimeoutInSeconds"/>
+          <zeebe:input source="=20" target="readTimeoutInSeconds"/>
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
-          <zeebe:header key="elementTemplateVersion" value="13" />
-          <zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2" />
-          <zeebe:header key="resultExpression" value="={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot, availableSlots: response.body.availableSlots, bookingStatus: response.body.bookingStatus}" />
-          <zeebe:header key="retryBackoff" value="PT0S" />
+          <zeebe:header key="elementTemplateVersion" value="13"/>
+          <zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2"/>
+          <zeebe:header key="resultExpression" value="={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot, availableSlots: response.body.availableSlots, bookingStatus: response.body.bookingStatus}"/>
+          <zeebe:header key="retryBackoff" value="PT0S"/>
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>fRoutine</bpmn:incoming>
@@ -99,8 +99,8 @@
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="staffReview" name="Staff scheduling review">
       <bpmn:extensionElements>
-        <zeebe:userTask />
-        <zeebe:assignmentDefinition assignee="demo" />
+        <zeebe:userTask/>
+        <zeebe:assignmentDefinition assignee="demo"/>
       </bpmn:extensionElements>
       <bpmn:incoming>fNoSlot</bpmn:incoming>
       <bpmn:outgoing>fStaffDone</bpmn:outgoing>
@@ -110,57 +110,132 @@
       <bpmn:incoming>fStaffDone</bpmn:incoming>
       <bpmn:incoming>fUrgentDone</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="register" />
-    <bpmn:sequenceFlow id="fValidate" sourceRef="register" targetRef="registration" />
-    <bpmn:sequenceFlow id="f2" sourceRef="registration" targetRef="triage" />
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="register"/>
+    <bpmn:sequenceFlow id="fValidate" sourceRef="register" targetRef="registration"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="registration" targetRef="triage"/>
     <bpmn:sequenceFlow id="fInvalid" name="No" sourceRef="registration" targetRef="invalidRegistration">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=registrationValid = false</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f3" sourceRef="triage" targetRef="category" />
+    <bpmn:sequenceFlow id="f3" sourceRef="triage" targetRef="category"/>
     <bpmn:sequenceFlow id="fUrgent" name="Urgent" sourceRef="category" targetRef="urgentReview">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=triageCategory = "Urgent Assessment"</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="fPriority" name="Priority" sourceRef="category" targetRef="priorityReview">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=triageCategory = "Priority Review"</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="fRoutine" name="Routine" sourceRef="category" targetRef="schedule" />
-    <bpmn:sequenceFlow id="fPriorityDone" sourceRef="priorityReview" targetRef="schedule" />
-    <bpmn:sequenceFlow id="f6" sourceRef="schedule" targetRef="slot" />
+    <bpmn:sequenceFlow id="fRoutine" name="Routine" sourceRef="category" targetRef="schedule"/>
+    <bpmn:sequenceFlow id="fPriorityDone" sourceRef="priorityReview" targetRef="schedule"/>
+    <bpmn:sequenceFlow id="f6" sourceRef="schedule" targetRef="slot"/>
     <bpmn:sequenceFlow id="fNoSlot" name="No" sourceRef="slot" targetRef="staffReview">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=slotAvailable = false</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="fBooked" name="Yes" sourceRef="slot" targetRef="booked" />
-    <bpmn:sequenceFlow id="fStaffDone" sourceRef="staffReview" targetRef="booked" />
-    <bpmn:sequenceFlow id="fUrgentDone" sourceRef="urgentReview" targetRef="booked" />
+    <bpmn:sequenceFlow id="fBooked" name="Yes" sourceRef="slot" targetRef="booked"/>
+    <bpmn:sequenceFlow id="fStaffDone" sourceRef="staffReview" targetRef="booked"/>
+    <bpmn:sequenceFlow id="fUrgentDone" sourceRef="urgentReview" targetRef="booked"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_triage">
     <bpmndi:BPMNPlane id="BPMNPlane_triage" bpmnElement="patient-triage">
-      <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="140" y="242" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="register_di" bpmnElement="register"><dc:Bounds x="230" y="220" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="registration_di" bpmnElement="registration" isMarkerVisible="true"><dc:Bounds x="420" y="235" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="invalidRegistration_di" bpmnElement="invalidRegistration"><dc:Bounds x="427" y="390" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="triage_di" bpmnElement="triage"><dc:Bounds x="520" y="220" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="category_di" bpmnElement="category" isMarkerVisible="true"><dc:Bounds x="740" y="235" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="urgentReview_di" bpmnElement="urgentReview"><dc:Bounds x="860" y="80" width="190" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="priorityReview_di" bpmnElement="priorityReview"><dc:Bounds x="860" y="360" width="180" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="schedule_di" bpmnElement="schedule"><dc:Bounds x="940" y="220" width="170" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="slot_di" bpmnElement="slot" isMarkerVisible="true"><dc:Bounds x="1160" y="235" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="staffReview_di" bpmnElement="staffReview"><dc:Bounds x="1260" y="360" width="190" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="booked_di" bpmnElement="booked"><dc:Bounds x="1400" y="242" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="176" y="260" /><di:waypoint x="230" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fValidate_di" bpmnElement="fValidate"><di:waypoint x="390" y="260" /><di:waypoint x="420" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="470" y="260" /><di:waypoint x="500" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fInvalid_di" bpmnElement="fInvalid"><di:waypoint x="445" y="285" /><di:waypoint x="445" y="390" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="690" y="260" /><di:waypoint x="740" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fUrgent_di" bpmnElement="fUrgent"><di:waypoint x="765" y="235" /><di:waypoint x="765" y="120" /><di:waypoint x="860" y="120" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fPriority_di" bpmnElement="fPriority"><di:waypoint x="765" y="285" /><di:waypoint x="765" y="400" /><di:waypoint x="860" y="400" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fRoutine_di" bpmnElement="fRoutine"><di:waypoint x="790" y="260" /><di:waypoint x="940" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fPriorityDone_di" bpmnElement="fPriorityDone"><di:waypoint x="1040" y="400" /><di:waypoint x="1025" y="400" /><di:waypoint x="1025" y="300" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1110" y="260" /><di:waypoint x="1160" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fNoSlot_di" bpmnElement="fNoSlot"><di:waypoint x="1185" y="285" /><di:waypoint x="1185" y="400" /><di:waypoint x="1260" y="400" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fBooked_di" bpmnElement="fBooked"><di:waypoint x="1210" y="260" /><di:waypoint x="1400" y="260" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fStaffDone_di" bpmnElement="fStaffDone"><di:waypoint x="1450" y="400" /><di:waypoint x="1418" y="400" /><di:waypoint x="1418" y="278" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="fUrgentDone_di" bpmnElement="fUrgentDone"><di:waypoint x="1050" y="120" /><di:waypoint x="1418" y="120" /><di:waypoint x="1418" y="242" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <dc:Bounds x="140" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="register_di" bpmnElement="register">
+        <dc:Bounds x="230" y="220" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="registration_di" bpmnElement="registration" isMarkerVisible="true">
+        <dc:Bounds x="420" y="235" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="415" y="197.5" width="59" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="invalidRegistration_di" bpmnElement="invalidRegistration">
+        <dc:Bounds x="427" y="390" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="triage_di" bpmnElement="triage">
+        <dc:Bounds x="520" y="220" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="category_di" bpmnElement="category" isMarkerVisible="true">
+        <dc:Bounds x="740" y="235" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="urgentReview_di" bpmnElement="urgentReview">
+        <dc:Bounds x="860" y="80" width="190" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="priorityReview_di" bpmnElement="priorityReview">
+        <dc:Bounds x="860" y="360" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="schedule_di" bpmnElement="schedule">
+        <dc:Bounds x="940" y="220" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="slot_di" bpmnElement="slot" isMarkerVisible="true">
+        <dc:Bounds x="1160" y="235" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="staffReview_di" bpmnElement="staffReview">
+        <dc:Bounds x="1260" y="360" width="190" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="booked_di" bpmnElement="booked">
+        <dc:Bounds x="1400" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="176" y="260"/>
+        <di:waypoint x="230" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fValidate_di" bpmnElement="fValidate">
+        <di:waypoint x="390" y="260"/>
+        <di:waypoint x="420" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="470" y="260"/>
+        <di:waypoint x="520" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fInvalid_di" bpmnElement="fInvalid">
+        <di:waypoint x="445" y="285"/>
+        <di:waypoint x="445" y="390"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="690" y="260"/>
+        <di:waypoint x="740" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fUrgent_di" bpmnElement="fUrgent">
+        <di:waypoint x="765" y="235"/>
+        <di:waypoint x="765" y="120"/>
+        <di:waypoint x="860" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fPriority_di" bpmnElement="fPriority">
+        <di:waypoint x="765" y="285"/>
+        <di:waypoint x="765" y="400"/>
+        <di:waypoint x="860" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRoutine_di" bpmnElement="fRoutine">
+        <di:waypoint x="790" y="260"/>
+        <di:waypoint x="940" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fPriorityDone_di" bpmnElement="fPriorityDone">
+        <di:waypoint x="1040" y="400"/>
+        <di:waypoint x="1025" y="400"/>
+        <di:waypoint x="1025" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <di:waypoint x="1110" y="260"/>
+        <di:waypoint x="1160" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fNoSlot_di" bpmnElement="fNoSlot">
+        <di:waypoint x="1185" y="285"/>
+        <di:waypoint x="1185" y="400"/>
+        <di:waypoint x="1260" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fBooked_di" bpmnElement="fBooked">
+        <di:waypoint x="1210" y="260"/>
+        <di:waypoint x="1400" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fStaffDone_di" bpmnElement="fStaffDone">
+        <di:waypoint x="1450" y="400"/>
+        <di:waypoint x="1418" y="400"/>
+        <di:waypoint x="1418" y="278"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fUrgentDone_di" bpmnElement="fUrgentDone">
+        <di:waypoint x="1050" y="120"/>
+        <di:waypoint x="1418" y="120"/>
+        <di:waypoint x="1418" y="242"/>
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

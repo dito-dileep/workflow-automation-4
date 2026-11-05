@@ -1,6 +1,6 @@
 # Test Matrix
 
-Run each row after deployment. The original instance references are from the earlier v6 deployment and are retained as historical baseline evidence. Fresh v7 live-run results are recorded below. Capture genuine Modeler, Tasklist, and Operate screenshots before submission; screenshots are not included or fabricated.
+Run each row after deployment. The original instance references from v6 and v7 are retained as historical baseline evidence. Fresh v8 live-run results are recorded below. Capture genuine Modeler, Tasklist, and Operate screenshots before submission; screenshots are not included or fabricated.
 
 | ID | Lab | Synthetic input / setup | Expected route | Actual result | Evidence |
 |---|---|---|---|---|---|
@@ -23,9 +23,9 @@ Run each row after deployment. The original instance references are from the ear
 | L3-05 | Triage | Switch scheduling mock off before starting | Incident → switch mock on → retry | PASS — scheduling incident created, mock restored, Retry completed; `bookingStatus=SLOT_AVAILABLE` | Live instance `2251799813729583` (v6) |
 | L3-06 | Triage | Missing patient reference or urgency indicator | Invalid-registration end before decision/scheduling | PASS — `registrationValid=false`; completed before decision/scheduling | Live instance `2251799813728516` (v6) |
 
-## Current v7 live verification
+## Prior v7 live verification
 
-The three BPMN and three DMN resources deployed to Camunda 8.8.32 as version 7. All nine cases below were started against that deployment; the displayed DMN results and routes were verified in Operate. `ACTIVE` means the process is waiting at a modeled user task, not that it failed. Every instance reported `hasIncident=false`.
+The three BPMN and three DMN resources deployed to Camunda 8.8.32 as version 7. All nine cases below were started against that deployment; the displayed DMN results and routes were verified in Operate. These runs precede the stricter required-input checks documented below. `ACTIVE` means the process is waiting at a modeled user task, not that it failed. Every instance reported `hasIncident=false`.
 
 | Lab | Input case | Verified API/DMN result | Instance | State |
 |---|---|---|---|---|
@@ -39,11 +39,28 @@ The three BPMN and three DMN resources deployed to Camunda 8.8.32 as version 7. 
 | Triage | Priority: AMBER | `registrationValid=true`; `triageCategory=Priority Review` | `2251799813740154` | ACTIVE — staff review |
 | Triage | Urgent: RED | `registrationValid=true`; `triageCategory=Urgent Assessment` | `2251799813740214` | ACTIVE — clinical assessment |
 
+## Fresh v8 live verification
+
+The three BPMN and three DMN resources deployed to Camunda 8.8.32 as version 8. These instances were started using scenario inputs only; output variables were calculated by REST or DMN tasks. Every instance reported `hasIncident=false`.
+
+| Lab | Input case | Verified result / route | Instance | State |
+|---|---|---|---|---|
+| Loan | Approved: income 60,000; amount 300,000; score 720 | `applicationValid=true`; `creditScore=720`; `creditStatus=CLEAR`; DMN `loanDecision=Approved` | `2251799813750843` | COMPLETED |
+| Order | P1: quantity 2; unit price 6,000; GOLD/EXPRESS; token `OK` | `orderValid=true`; `stockAvailable=true`; `orderTotal=12000`; `deliveryPriority=P1`; API `paymentStatus=APPROVED` | `2251799813750864` | ACTIVE — manual verification |
+| Order | Payment token `DECLINE` | Payment-declined path | `2251799813750888` | COMPLETED |
+| Order | Quantity 25 | Out-of-stock path | `2251799813750959` | COMPLETED |
+| Order | Missing payment token | Invalid-order path | `2251799813751033` | COMPLETED |
+| Triage | GREEN; routine follow-up; slot available | DMN `triageCategory=Routine`; scheduling completed | `2251799813751074` | COMPLETED |
+| Triage | GREEN; `slotMode=none` | Scheduling returns no slots; staff review path | `2251799813751105` | ACTIVE — staff scheduling review |
+| Triage | RED | DMN urgent-assessment route | `2251799813751153` | ACTIVE — clinical assessment |
+
 ## Current source checks
 
-- `mvn test`: 4 REST validation API unit tests cover valid/invalid loan and registration inputs and order total/stock outputs.
+- `mvn test`: 6 API unit tests cover required loan score, order inputs/payment token, calculated payment status, registration/slot mode, and calculated order total/stock outputs.
 - BPMN/DMN XML and decision references validate; all six REST service tasks have the REST template, request mappings, result expressions, and R-icon metadata.
-- The three validation endpoints returned the expected synthetic outputs during the live run: loan validation, order validation/total/stock, and registration validation.
+- The validation APIs reject missing/unsupported score, payment token, or slot mode instead of supplying default positive/approved/available outcomes.
+- Start examples contain only process inputs. Result variables such as `paymentStatus`, `orderValid`, and `stockAvailable` are returned by REST tasks and are not accepted as scenario inputs.
+- Restart Spring Boot after model changes to deploy the current BPMN/DMN files. The v6/v7 keys above are historical; the v8 keys are the latest live evidence.
 - Capture presentation screenshots from your own Camunda run before submission. For Tasklist proof, complete the waiting review tasks; Operate shows their calculated DMN result variables.
 
 ## Starting instances
