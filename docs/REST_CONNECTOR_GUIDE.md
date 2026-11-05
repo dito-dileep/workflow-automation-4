@@ -1,30 +1,68 @@
 # REST Connector Guide
 
-All integrations use the local mock API bundled with this project. They accept synthetic values only.
+The BPMN models use Camunda's **REST Outbound Connector** element template (`io.camunda.connectors.HttpJson.v2`, local template version 13). In Modeler, the template appears as an R-badge task. Technically, it remains a BPMN service task and runs with `io.camunda:http-json:1`.
 
-## Camunda HTTP JSON Connector configuration
+The Spring Boot application exposes local synthetic APIs at `http://localhost:8081/mock`. The decision endpoints calculate a result from each request's inputs; the executable BPMN models do not call the retained DMN reference files.
 
-The BPMN models already contain these HTTP JSON connector settings. In Camunda Modeler, use the values below if you need to inspect or recreate a service task. The local Camunda 8 Run connector calls the Spring Boot mock API on the same machine.
+## Connector configuration
 
-| Lab | Task | Method + URL | Request body | Result expression |
+| Lab | BPMN task | Method + URL | Request values | Result expression |
 |---|---|---|---|---|
-| 1 | Mock credit assessment | `POST http://localhost:8081/mock/credit-assessments` | `={"syntheticCreditScore": if is defined(syntheticCreditScore) then syntheticCreditScore else 700, "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={creditScore: response.body.creditScore, creditStatus: response.body.creditStatus}` |
-| 2 | Mock payment gateway | `POST http://localhost:8081/mock/payments` | `={"paymentToken": if is defined(paymentToken) then paymentToken else "OK", "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={paymentStatus: response.body.paymentStatus, transactionRef: response.body.transactionRef}` |
-| 3 | Mock scheduling API | `POST http://localhost:8081/mock/appointments` | `={"slotMode": if is defined(slotMode) then slotMode else "available", "simulateFailure": if is defined(simulateFailure) then simulateFailure else false}` | `={slotAvailable: response.body.slotAvailable, availableSlot: response.body.availableSlot, availableSlots: response.body.availableSlots, bookingStatus: response.body.bookingStatus}` |
+| 1 | Mock credit assessment | `POST /mock/credit-assessments` | `syntheticCreditScore`, `simulateFailure` | `creditScore`, `creditStatus` |
+| 1 | Calculate loan decision | `POST /mock/decisions/loan` | `monthlyIncome`, `requestedAmount`, `creditScore` | `loanDecision`, `decisionReason` |
+| 2 | Calculate delivery priority | `POST /mock/decisions/order-priority` | `orderTotal`, `customerCategory`, `deliveryPreference` | `deliveryPriority` |
+| 2 | Mock payment gateway | `POST /mock/payments` | `paymentToken`, `simulateFailure` | `paymentStatus`, `transactionRef` |
+| 3 | Calculate triage category | `POST /mock/decisions/triage` | `urgencyIndicator`, `symptomsSummary` | `triageCategory` |
+| 3 | Mock scheduling API | `POST /mock/appointments` | `slotMode`, `simulateFailure` | `slotAvailable`, `availableSlot`, `availableSlots`, `bookingStatus` |
 
-These result expressions are stored in the connector's `resultExpression` task header; do not replace them with BPMN output mappings.
+Each task maps the JSON response to process variables in its `resultExpression` task header. The process gateways use those variables for routing. Keep the R-icon element template and do not replace these connector tasks with generic service tasks.
 
-For a connector running in a separate container, replace `localhost` with `host.docker.internal` so it can reach the API on the Windows host. Do not put real API keys, card data, patient data, or passwords in either model or repository.
+For Camunda running in a separate container, replace `localhost` with `host.docker.internal` so it can reach the API on the Windows host. Do not put real API keys, card data, patient data, or passwords in either the model or repository.
 
-To show an incident, switch the relevant mock off, run the process with `simulateFailure` omitted or `false`, then switch the mock back on and click **Retry** in Operate. The connector retries the request using the same mapped inputs; changing a process variable after the failure does not alter that request. Each BPMN HTTP task has one attempt configured so the incident appears promptly.
+## Decision endpoint examples
 
-| Lab | Switch off | Switch on |
-|---|---|---|
-| 1 | http://localhost:8081/mock/controls/credit?down=true | http://localhost:8081/mock/controls/credit?down=false |
-| 2 | http://localhost:8081/mock/controls/payment?down=true | http://localhost:8081/mock/controls/payment?down=false |
-| 3 | http://localhost:8081/mock/controls/scheduling?down=true | http://localhost:8081/mock/controls/scheduling?down=false |
+### Loan decision
 
-## API examples
+```http
+POST /mock/decisions/loan
+Content-Type: application/json
+
+{"monthlyIncome":60000,"requestedAmount":300000,"creditScore":720}
+```
+
+```json
+{"loanDecision":"Approved","decisionReason":"Income, requested amount, and credit score meet the approval thresholds."}
+```
+
+### Order priority
+
+```http
+POST /mock/decisions/order-priority
+Content-Type: application/json
+
+{"orderTotal":12000,"customerCategory":"GOLD","deliveryPreference":"EXPRESS"}
+```
+
+```json
+{"deliveryPriority":"P1"}
+```
+
+### Triage category
+
+```http
+POST /mock/decisions/triage
+Content-Type: application/json
+
+{"urgencyIndicator":"AMBER","symptomsSummary":"Needs priority review"}
+```
+
+```json
+{"triageCategory":"Priority Review"}
+```
+
+These are educational examples only. Triage is not clinical advice or a medical decision-support function.
+
+## Integration examples
 
 ### Credit assessment
 
@@ -32,7 +70,7 @@ To show an incident, switch the relevant mock off, run the process with `simulat
 POST /mock/credit-assessments
 Content-Type: application/json
 
-{"syntheticCreditScore": 720, "simulateFailure": false}
+{"syntheticCreditScore":720,"simulateFailure":false}
 ```
 
 ```json
@@ -45,7 +83,7 @@ Content-Type: application/json
 POST /mock/payments
 Content-Type: application/json
 
-{"paymentToken":"OK", "simulateFailure":false}
+{"paymentToken":"OK","simulateFailure":false}
 ```
 
 ```json
@@ -60,11 +98,17 @@ Use `"paymentToken":"DECLINE"` for a declined payment, or `"simulateFailure":tru
 POST /mock/appointments
 Content-Type: application/json
 
-{"slotMode":"available", "simulateFailure":false}
+{"slotMode":"available","simulateFailure":false}
 ```
 
-```json
-{"slotAvailable":true,"availableSlot":"2026-11-10T10:30:00+05:30","availableSlots":[{"slotId":"SLOT-001","startTime":"2026-11-10T10:30:00+05:30"}],"bookingStatus":"SLOT_AVAILABLE"}
-```
+The response contains the available slot and `bookingStatus="SLOT_AVAILABLE"`. Using `"slotMode":"none"` returns `slotAvailable:false`, an empty `availableSlots` list, and `bookingStatus="NO_SLOTS"`. This mock reports availability; it does not reserve a real appointment.
 
-The scheduling mock reports availability, not a confirmed real-world reservation. `slotMode` set to `"none"` returns `slotAvailable: false`, an empty `availableSlots` list, and `bookingStatus: "NO_SLOTS"`, which routes to staff review.
+## Incident and recovery demonstration
+
+Switch the relevant integration mock off before starting a process. When Operate shows the failed REST job, turn the mock back on and retry the job. The request uses the same process variables; use the mock control endpoint rather than changing variables on a failed instance. The integration tasks have one attempt for a quick incident demonstration; decision tasks retry up to three times.
+
+| Lab | Switch off | Switch on |
+|---|---|---|
+| 1 | `http://localhost:8081/mock/controls/credit?down=true` | `http://localhost:8081/mock/controls/credit?down=false` |
+| 2 | `http://localhost:8081/mock/controls/payment?down=true` | `http://localhost:8081/mock/controls/payment?down=false` |
+| 3 | `http://localhost:8081/mock/controls/scheduling?down=true` | `http://localhost:8081/mock/controls/scheduling?down=false` |

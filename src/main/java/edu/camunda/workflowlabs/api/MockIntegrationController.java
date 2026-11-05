@@ -1,5 +1,6 @@
 package edu.camunda.workflowlabs.api;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,64 @@ public class MockIntegrationController {
     return ResponseEntity.ok(Map.of("creditScore", score, "creditStatus", score >= 650 ? "CLEAR" : "REFER"));
   }
 
+  @PostMapping("/decisions/loan")
+  public Map<String, Object> loanDecision(@RequestBody Map<String, Object> request) {
+    BigDecimal income = positiveAmount(request, "monthlyIncome");
+    BigDecimal amount = positiveAmount(request, "requestedAmount");
+    int score = integer(request, "creditScore");
+    if (score < 300 || score > 850) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "creditScore must be between 300 and 850");
+    }
+
+    String decision;
+    String reason;
+    if (income.compareTo(new BigDecimal("50000")) >= 0
+        && amount.compareTo(new BigDecimal("500000")) <= 0 && score >= 700) {
+      decision = "Approved";
+      reason = "Income, requested amount, and credit score meet the approval thresholds.";
+    } else if (income.compareTo(new BigDecimal("30000")) >= 0
+        && amount.compareTo(new BigDecimal("750000")) <= 0 && score >= 600) {
+      decision = "Manual Review";
+      reason = "The application meets the review thresholds but not all approval thresholds.";
+    } else {
+      decision = "Rejected";
+      reason = "The application does not meet the minimum review thresholds.";
+    }
+    return Map.of("loanDecision", decision, "decisionReason", reason);
+  }
+
+  @PostMapping("/decisions/order-priority")
+  public Map<String, Object> orderPriority(@RequestBody Map<String, Object> request) {
+    BigDecimal total = positiveAmount(request, "orderTotal");
+    String customerCategory = requiredText(request, "customerCategory");
+    String deliveryPreference = requiredText(request, "deliveryPreference");
+
+    String priority;
+    if (total.compareTo(new BigDecimal("5000")) >= 0
+        && "GOLD".equalsIgnoreCase(customerCategory)
+        && "EXPRESS".equalsIgnoreCase(deliveryPreference)) {
+      priority = "P1";
+    } else if (total.compareTo(new BigDecimal("2000")) >= 0
+        && "EXPRESS".equalsIgnoreCase(deliveryPreference)) {
+      priority = "P2";
+    } else {
+      priority = "P3";
+    }
+    return Map.of("deliveryPriority", priority);
+  }
+
+  @PostMapping("/decisions/triage")
+  public Map<String, Object> triageDecision(@RequestBody Map<String, Object> request) {
+    String urgency = requiredText(request, "urgencyIndicator");
+    requiredText(request, "symptomsSummary");
+    String category = switch (urgency.toUpperCase()) {
+      case "RED" -> "Urgent Assessment";
+      case "AMBER" -> "Priority Review";
+      default -> "Routine";
+    };
+    return Map.of("triageCategory", category);
+  }
+
   @PostMapping("/payments")
   public ResponseEntity<?> payment(@RequestBody Map<String, Object> request) {
     if (paymentDown.get() || Boolean.TRUE.equals(request.get("simulateFailure"))) return failure();
@@ -78,5 +137,41 @@ public class MockIntegrationController {
 
   private ResponseEntity<Map<String, Object>> failure() {
     return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Synthetic downstream failure"));
+  }
+
+  private BigDecimal positiveAmount(Map<String, Object> request, String name) {
+    Object value = request.get(name);
+    if (value == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " is required");
+    }
+    try {
+      BigDecimal amount = new BigDecimal(String.valueOf(value));
+      if (amount.signum() <= 0) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " must be greater than zero");
+      }
+      return amount;
+    } catch (NumberFormatException exception) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " must be numeric", exception);
+    }
+  }
+
+  private int integer(Map<String, Object> request, String name) {
+    Object value = request.get(name);
+    if (value == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " is required");
+    }
+    try {
+      return new BigDecimal(String.valueOf(value)).intValueExact();
+    } catch (NumberFormatException | ArithmeticException exception) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " must be an integer", exception);
+    }
+  }
+
+  private String requiredText(Map<String, Object> request, String name) {
+    Object value = request.get(name);
+    if (value == null || String.valueOf(value).isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " is required");
+    }
+    return String.valueOf(value).trim();
   }
 }

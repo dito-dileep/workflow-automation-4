@@ -9,7 +9,8 @@
 | `syntheticCreditScore`, `creditScore` | Number | Mock API input and returned score |
 | `applicationValid` | Boolean | Worker validation result |
 | `creditStatus` | String | `CLEAR` or `REFER` from mock API |
-| `loanDecision` | String | DMN output: `Approved`, `Manual Review`, or `Rejected` |
+| `loanDecision` | String | REST decision API output: `Approved`, `Manual Review`, or `Rejected` |
+| `decisionReason` | String | Explanation returned by the loan decision API |
 | `simulateFailure` | Boolean | Deliberately returns a mock HTTP 503 for recovery testing |
 
 ## Lab 2 — E-commerce fulfilment
@@ -18,9 +19,9 @@
 |---|---|---|
 | `customerRef`, `productId` | String | Synthetic order identity |
 | `quantity`, `unitPrice`, `orderTotal` | Number | Stock request and computed total |
-| `customerCategory`, `deliveryPreference` | String | DMN priority inputs |
+| `customerCategory`, `deliveryPreference` | String | REST priority-decision inputs |
 | `orderValid`, `stockAvailable` | Boolean | Worker validation and inventory result |
-| `deliveryPriority` | String | DMN output: `P1`, `P2`, or `P3` |
+| `deliveryPriority` | String | REST decision API output: `P1`, `P2`, or `P3` |
 | `paymentToken`, `paymentStatus`, `transactionRef` | String | Mock payment request and result |
 | `simulateFailure` | Boolean | Deliberately returns a mock HTTP 503 |
 
@@ -32,7 +33,7 @@
 | `appointmentPreference` | String | Requested appointment preference |
 | `symptomsSummary`, `urgencyIndicator` | String | Educational triage inputs; `RED`, `AMBER`, or other |
 | `registrationValid` | Boolean | Registration worker result |
-| `triageCategory` | String | DMN output: `Routine`, `Priority Review`, or `Urgent Assessment` |
+| `triageCategory` | String | REST decision API output: `Routine`, `Priority Review`, or `Urgent Assessment` |
 | `slotMode` | String | Mock scheduling request: `available` or `none` |
 | `slotAvailable`, `availableSlot`, `availableSlots` | Boolean/String/List | Mock scheduling API response |
 | `bookingStatus` | String | Mock response: `SLOT_AVAILABLE` or `NO_SLOTS`; this simulation checks availability and does not reserve a real appointment |

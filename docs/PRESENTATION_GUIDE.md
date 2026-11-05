@@ -1,38 +1,31 @@
-# Presentation guide: inputs, DMN decisions, and REST connectors
+# Presentation guide: three REST-driven workflow labs
 
-## The important distinction
+## What to show first
 
-The BPMN diagram does not contain one fixed set of input values. Values are supplied when a process instance starts. Workers and REST connectors produce additional variables, DMN evaluates its input variables, and BPMN gateways use the returned DMN output to select a route.
+Open the three BPMN files in Camunda Modeler. Explain that each REST call is still a BPMN **service task**, but it has Camunda's **REST Outbound Connector** element template applied (the R badge). The template exposes the HTTP settings and configures the `io.camunda:http-json:1` connector.
 
-In Operate, select the **process instance root** in Instance History to see the process variables. Selecting a service-task row can show “The Flow Node has no Variables”; that is a node-specific view and does not mean the instance has no variables. Click a business-rule (DMN) activity to inspect that step, and use the root Variables tab for the full input/output set.
+For each lab, click the R-badge decision task and show:
 
-## What to show in Camunda Modeler
+1. The REST Connector template and `POST` URL.
+2. The request body, which maps the current process instance's input variables.
+3. The `resultExpression`, which copies the API decision into a process variable.
+4. The outgoing BPMN gateway condition that routes using that returned variable.
 
-For each BPMN file:
-
-1. Select the HTTP service task (gear icon).
-2. Expand **Task definition** to show `io.camunda:http-json:1`.
-3. Expand **Input mapping** to show the HTTP method, local API URL, and request body.
-4. Expand **Headers** to show the `resultExpression` that maps the response into process variables.
-5. Select the business-rule task (table icon) to show its called decision ID and result variable.
-6. Open the corresponding DMN tab and show its input columns, rules, and output column.
-7. Select the outgoing BPMN gateway to show that its sequence-flow condition uses the DMN output.
-
-The `localhost:8081` APIs are synthetic Spring Boot mocks bundled with this project; they do not call real credit, payment, or hospital services.
+The three `.dmn` files remain in the project as reference examples; the running processes do **not** call them. The Spring Boot API calculates each result from the request values. All APIs are synthetic local demos, not real lending, payment, or clinical services.
 
 ## Lab 1 — Loan approval
 
 **Start variables:** `applicantId`, `monthlyIncome`, `requestedAmount`, `syntheticCreditScore`.
 
-The credit REST connector sends the synthetic score to `/mock/credit-assessments`; the response supplies `creditScore` and `creditStatus`. The `loan-decision` DMN evaluates `monthlyIncome`, `requestedAmount`, and returned `creditScore`, then sets `loanDecision`. The BPMN gateway routes `Approved` to the approved end, `Manual Review` to the Tasklist review, and the remaining result to rejection.
+The credit REST call returns `creditScore` and `creditStatus`. The next REST call sends `monthlyIncome`, `requestedAmount`, and the returned `creditScore` to `/mock/decisions/loan`. The response sets `loanDecision` and `decisionReason`; the BPMN gateway routes Approved, Manual Review, or Rejected.
 
-The DMN rules, in priority order, are:
+The API uses these input thresholds:
 
-- `Approved`: income at least `50000`, amount at most `500000`, and score at least `700`.
-- `Manual Review`: income at least `30000`, amount at most `750000`, and score at least `600`, if the approval rule did not match first.
-- `Rejected`: otherwise.
+- **Approved:** monthly income at least `50000`, requested amount at most `500000`, credit score at least `700`.
+- **Manual Review:** otherwise, monthly income at least `30000`, requested amount at most `750000`, credit score at least `600`.
+- **Rejected:** otherwise.
 
-Use this manual-review example:
+Start a Manual Review example:
 
 ```powershell
 $body = '{"processDefinitionId":"loan-approval","variables":{"applicantId":"APP-DEMO-REVIEW","monthlyIncome":35000,"requestedAmount":600000,"syntheticCreditScore":640}}'
@@ -40,19 +33,23 @@ $r = Invoke-RestMethod -Uri 'http://localhost:8080/v2/process-instances' -Method
 "Instance key: $($r.processInstanceKey)"
 ```
 
-Expected values: credit API returns `creditScore=640` and `creditStatus=REFER`; the DMN returns `loanDecision=Manual Review`; Operate shows the token waiting at **Manual loan review**, and Tasklist shows the assigned review task.
+Expected: `creditScore=640`, `creditStatus=REFER`, `loanDecision=Manual Review`; Operate shows the token waiting at **Manual loan review**, and Tasklist shows the review assigned to `demo`.
 
-For automatic approval, use income `60000`, amount `300000`, and score `720`; expected `creditStatus=CLEAR` and `loanDecision=Approved`. For rejection, use income `25000`, amount `900000`, and score `550`; expected `loanDecision=Rejected`.
+For Approved, use income `60000`, amount `300000`, score `720`. For Rejected, use income `25000`, amount `900000`, score `550`.
+
+**Say:** “The process checks the application, obtains a synthetic credit score, then sends income, loan amount, and score to a REST API. That API calculates the decision for this application, and BPMN routes it to approval, rejection, or manual review.”
 
 ## Lab 2 — Order fulfilment
 
 **Start variables:** `customerRef`, `productId`, `quantity`, `unitPrice`, `customerCategory`, `deliveryPreference`, `paymentToken`.
 
-The Java worker validates the order, checks synthetic stock, and calculates `orderTotal = quantity × unitPrice`. The `order-priority` DMN evaluates `orderTotal`, `customerCategory`, and `deliveryPreference` and returns `deliveryPriority`. The BPMN gateway now uses that DMN result: `P1` and `P2` go to **Manual order verification**; `P3` proceeds to fulfilment. The REST connector sends `paymentToken` to `/mock/payments` and returns `paymentStatus` and `transactionRef`.
+The Java worker validates the order and stock and calculates `orderTotal = quantity × unitPrice`. The REST decision call sends `orderTotal`, `customerCategory`, and `deliveryPreference` to `/mock/decisions/order-priority`; its response sets `deliveryPriority`. Payment is then handled by a separate REST Connector call to `/mock/payments`.
 
-The DMN rules, in priority order, are: `P1` for total at least `5000` with `GOLD` and `EXPRESS`; `P2` for total at least `2000` with `EXPRESS`; and `P3` otherwise.
+- **P1:** total at least `5000`, category `GOLD`, preference `EXPRESS`.
+- **P2:** otherwise, total at least `2000` and preference `EXPRESS`.
+- **P3:** otherwise.
 
-For a DMN-driven review, start this example:
+Start a P1/manual-verification example:
 
 ```powershell
 $body = '{"processDefinitionId":"order-fulfilment","variables":{"customerRef":"CUST-DEMO-HIGH","productId":"SKU-002","quantity":2,"unitPrice":6000,"customerCategory":"GOLD","deliveryPreference":"EXPRESS","paymentToken":"OK"}}'
@@ -60,43 +57,41 @@ $r = Invoke-RestMethod -Uri 'http://localhost:8080/v2/process-instances' -Method
 "Instance key: $($r.processInstanceKey)"
 ```
 
-Expected values: `orderTotal=12000`, payment returns `paymentStatus=APPROVED`, the DMN returns `deliveryPriority=P1`, and the BPMN gateway routes to **Manual order verification**.
+Expected: `orderTotal=12000`, `deliveryPriority=P1`, `paymentStatus=APPROVED`; the process waits at **Manual order verification**. A standard order with total `1000`, `STANDARD`, `STANDARD`, and token `OK` returns P3 and completes without review.
 
-For the normal route, use quantity `2`, unit price `500`, category `STANDARD`, preference `STANDARD`, and token `OK`; expected `orderTotal=1000`, `deliveryPriority=P3`, and fulfilment. For a decline, set `paymentToken` to `DECLINE`. Quantity `25` demonstrates insufficient stock.
+**Say:** “The worker validates stock and calculates the order total. A REST API uses the total, customer category, and delivery preference to calculate priority. The process then calls the payment API and sends P1 or P2 orders for manual verification.”
 
 ## Lab 3 — Patient appointment and triage
 
 **Start variables:** `patientRef`, `appointmentPreference`, `symptomsSummary`, `urgencyIndicator`, `slotMode`.
 
-The Java worker sets `registrationValid`; a BPMN gateway rejects invalid registration before the DMN. The `triage-decision` DMN evaluates `urgencyIndicator` and `symptomsSummary`, sets `triageCategory`, and the BPMN gateway routes `Routine`, `Priority Review`, or `Urgent Assessment`. Routine and reviewed-priority flows call `/mock/appointments`; its response supplies `slotAvailable`, `availableSlot`, `availableSlots`, and `bookingStatus`.
-
-- `RED` returns `Urgent Assessment`.
-- `AMBER` returns `Priority Review`.
-- Other urgency values return `Routine`.
+The Java worker validates registration. The triage REST call sends `urgencyIndicator` and `symptomsSummary` to `/mock/decisions/triage`; the API uses the urgency indicator to return `triageCategory`. `RED` routes to **Immediate clinical assessment**, `AMBER` to **Priority staff review**, and other values to the routine scheduling path. The scheduling REST call returns `slotAvailable`, `availableSlot`, `availableSlots`, and `bookingStatus`.
 
 - `GREEN` with `slotMode=available` → `Routine`, one mock slot, `SLOT_AVAILABLE`.
-- `AMBER` with `slotMode=available` → `Priority Review` Tasklist task, then scheduling.
-- `RED` → `Urgent Assessment` Tasklist task.
+- `AMBER` with `slotMode=available` → `Priority Review` task, then scheduling.
+- `RED` → `Urgent Assessment` task.
 - `GREEN` with `slotMode=none` → no slots and a staff scheduling-review task.
 
-This is an educational simulation; `SLOT_AVAILABLE` is not a real reservation or clinical recommendation.
+This is an educational simulation. It is not medical advice, clinical decision support, or a real appointment reservation.
 
-## Finding the values in Operate
+**Say:** “After registration validation, a REST API uses the urgency indicator to return a triage category. BPMN routes urgent and priority cases to staff, while routine cases continue to the scheduling API. The scheduling result is only a mock availability response.”
 
-1. Open the instance in Operate using the instance key printed by PowerShell.
-2. In **Instance History**, click the top-level process row, not a service-task row.
-3. Open **Variables** to show submitted inputs and calculated outputs. Examples: `monthlyIncome` / `loanDecision`, `orderTotal` / `deliveryPriority`, or `urgencyIndicator` / `triageCategory` / `availableSlots`.
-4. Click the decision activity in the diagram or history to show where DMN ran. Use the BPMN diagram and the DMN editor to show the rule and outgoing route.
-5. For a waiting human task, open Tasklist and complete the task assigned to `demo`.
+## Where to show the results
 
-An instance that has already completed will not show a waiting user task. Start the relevant review example and open Tasklist while it is active.
+1. In Operate, open the instance using the key printed by PowerShell.
+2. Select the process-instance root in **Instance History**, then open **Variables**. Show both submitted inputs and calculated outputs, such as `monthlyIncome` / `loanDecision`, `orderTotal` / `deliveryPriority`, or `urgencyIndicator` / `triageCategory`.
+3. Select the REST task in the BPMN diagram to show where the API was called. In Modeler, show its input mapping and response `resultExpression`.
+4. For a waiting human task, open Tasklist and complete the task assigned to `demo`.
 
-## REST connector examples
+If a process already completed, it will not show a waiting user task. Start the matching review example and open Tasklist while it is active.
 
-The three connectors use `POST`:
+## REST endpoints
 
-- Loan: `http://localhost:8081/mock/credit-assessments`, body includes `syntheticCreditScore`.
-- Order: `http://localhost:8081/mock/payments`, body includes `paymentToken`.
-- Triage: `http://localhost:8081/mock/appointments`, body includes `slotMode`.
+- Loan credit assessment: `POST http://localhost:8081/mock/credit-assessments`
+- Loan decision: `POST http://localhost:8081/mock/decisions/loan`
+- Order priority: `POST http://localhost:8081/mock/decisions/order-priority`
+- Order payment: `POST http://localhost:8081/mock/payments`
+- Triage decision: `POST http://localhost:8081/mock/decisions/triage`
+- Appointment scheduling: `POST http://localhost:8081/mock/appointments`
 
-The full expressions and incident-control URLs are in the [REST Connector Guide](REST_CONNECTOR_GUIDE.md); complete test cases are in the [Test Matrix](TEST_MATRIX.md).
+The [REST Connector Guide](REST_CONNECTOR_GUIDE.md) documents request/response mappings and incident controls; the [Test Matrix](TEST_MATRIX.md) contains the sample scenarios.

@@ -6,7 +6,7 @@
 ![Java](https://img.shields.io/badge/Java-21-0F172A?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-16A34A?style=flat-square&logo=springboot&logoColor=white)
 ![BPMN](https://img.shields.io/badge/BPMN-3%20models-2563EB?style=flat-square)
-![DMN](https://img.shields.io/badge/DMN-3%20tables-7C3AED?style=flat-square)
+![REST decisions](https://img.shields.io/badge/REST-Input--driven%20decisions-7C3AED?style=flat-square)
 
 **End-to-end workflow automation for loan approval, e-commerce fulfilment, and appointment triage.**
 
@@ -16,34 +16,37 @@
 
 ## What’s inside
 
-This submission implements all three practical-assignment labs using a consistent Camunda 8 architecture. Each lab combines a BPMN process, a DMN decision, Java job workers, a REST integration route, Tasklist hand-offs, and a defined incident-recovery exercise.
+This submission implements all three practical-assignment labs using a consistent Camunda 8 architecture. Each lab combines a BPMN process, Java job workers, Camunda's REST Outbound Connector, a local REST API that calculates decisions from the process inputs, Tasklist hand-offs, and an incident-recovery exercise. The three DMN files are retained as reference materials, but the running BPMN processes do not call them.
 
-| Lab | Scenario | BPMN | DMN decision | Human task |
+| Lab | Scenario | BPMN | Runtime decision API | Human task |
 |:--:|:--|:--|:--|:--|
-| 01 | Loan approval | [Open model](src/main/resources/models/lab-1-loan-approval.bpmn) | `Approved` / `Rejected` / `Manual Review` | Loan review |
-| 02 | E-commerce fulfilment | [Open model](src/main/resources/models/lab-2-order-fulfilment.bpmn) | `P1` / `P2` / `P3` delivery priority | Order verification |
-| 03 | Hospital appointment & triage | [Open model](src/main/resources/models/lab-3-patient-triage.bpmn) | `Routine` / `Priority Review` / `Urgent Assessment` | Clinical / scheduling review |
+| 01 | Loan approval | [Open model](src/main/resources/models/lab-1-loan-approval.bpmn) | Income + amount + credit score → loan decision | Loan review |
+| 02 | E-commerce fulfilment | [Open model](src/main/resources/models/lab-2-order-fulfilment.bpmn) | Order total + category + preference → priority | Order verification |
+| 03 | Hospital appointment & triage | [Open model](src/main/resources/models/lab-3-patient-triage.bpmn) | Urgency indicator → triage category | Clinical / scheduling review |
+
+> **Decision behavior:** the REST decision endpoints calculate a result for each request from that process instance's input variables. The DMN tables are not used by the executable workflows.
 
 > **Data safety:** all examples are synthetic. This repository contains no real payment details, credentials, patient data, or personal information.
 
 ## Architecture at a glance
 
 ```text
-Process input ──► BPMN orchestration ──► Java job worker ──► process variables
+Process input ──► BPMN orchestration ──► Java job worker
                          │                       │
                          ▼                       ▼
-                    DMN decision            Mock REST API
-                         │                       │
-                         └──► gateways ──► Tasklist / completion
-                                              │
-                                              ▼
-                                       Operate incident recovery
+             REST Outbound Connector ──► Mock REST API
+                         │               (decision + integrations)
+                         ▼
+              process variables ──► BPMN gateways
+                         │
+                         ▼
+                 Tasklist / Operate
 ```
 
 <p align="center">
   <img src="assets/workflow-landscape.png" alt="Conceptual workflow landscape for the three lab scenarios" width="100%" />
   <br />
-  <sub><i>Conceptual workflow landscape — the executable BPMN and DMN models are linked in the lab table above.</i></sub>
+  <sub><i>Conceptual workflow landscape — executable BPMN models call the local REST APIs; DMN files are reference-only.</i></sub>
 </p>
 
 ## Repository map
@@ -98,15 +101,15 @@ Create each process instance with the PowerShell commands in the [Test Matrix](d
 <details open>
 <summary><b>01 · Loan approval</b></summary>
 
-`Validate applicant → mock credit assessment → DMN decision → approve / reject / manual review`
+`Validate applicant → credit REST API → input-driven loan-decision REST API → approve / reject / manual review`
 
-The DMN uses educational income, loan amount, and synthetic credit-score thresholds. Invalid applications close early; borderline applications create a Tasklist review.
+The decision endpoint evaluates the submitted income, requested amount, and returned synthetic credit score. Invalid applications close early; borderline applications create a Tasklist review.
 </details>
 
 <details>
 <summary><b>02 · E-commerce fulfilment</b></summary>
 
-`Validate & reserve stock → DMN priority → mock payment → fulfilment / verification`
+`Validate & reserve stock → input-driven priority REST API → payment REST API → fulfilment / verification`
 
 Orders with unavailable stock or declined payment end cleanly. High-value orders route through an explicit manual-verification task.
 </details>
@@ -114,7 +117,7 @@ Orders with unavailable stock or declined payment end cleanly. High-value orders
 <details>
 <summary><b>03 · Hospital appointment & triage</b></summary>
 
-`Validate registration → valid-registration gateway → educational DMN triage → mock scheduling → available / staff review`
+`Validate registration → input-driven triage REST API → mock scheduling API → available / staff review`
 
 `RED` cases go immediately to clinical assessment. No available slot creates a scheduling-review task. This is an educational workflow only—not medical advice or clinical decision support.
 </details>
@@ -126,7 +129,7 @@ Orders with unavailable stock or declined payment end cleanly. High-value orders
 - [REST connector guide](docs/REST_CONNECTOR_GUIDE.md) — connector configuration and request/response examples
 - [Test matrix](docs/TEST_MATRIX.md) — required normal, exception, and recovery scenarios
 - [Evidence and screenshots](evidence/README.md) — genuine Operate screenshots for all three labs and remaining evidence checklist
-- [Presentation guide](docs/PRESENTATION_GUIDE.md) — exact sample inputs, DMN rule results, and where to show them in Modeler, Operate, and Tasklist
+- [Presentation guide](docs/PRESENTATION_GUIDE.md) — exact sample inputs, REST request/response values, and where to show them in Modeler, Operate, and Tasklist
 
 ## Incident recovery demo
 
@@ -136,11 +139,11 @@ To demonstrate an incident, switch the relevant mock service off before starting
 Switch mock off → run instance → Operate incident → switch mock on → retry job → complete instance
 ```
 
-The connector tasks are configured with one attempt so the incident appears quickly. Retry repeats the HTTP request with the same process variables, so use the mock controls rather than changing `simulateFailure` on the failed instance. Record the incident and successful retry in the test matrix. The [evidence folder](evidence/README.md) contains genuine Operate screenshots from the local run; capture any additional Tasklist and incident/recovery evidence from your own deployment.
+The integration connectors are configured with one attempt so the incident appears quickly; decision connectors allow three attempts. Retry repeats the HTTP request with the same process variables, so use the mock controls rather than changing `simulateFailure` on the failed instance. Record the incident and successful retry in the test matrix. The [evidence folder](evidence/README.md) contains genuine Operate screenshots from an earlier local run; capture fresh screenshots for this updated deployment.
 
 ## Repository description
 
-> Camunda 8 practical assignment: BPMN + DMN workflow automation for loan approval, e-commerce order fulfilment, and hospital appointment triage, with Spring Boot workers, mock REST APIs, Tasklist review, and incident recovery.
+> Camunda 8 workflow automation labs for loan approval, e-commerce order fulfilment, and appointment triage, with Spring Boot workers, REST Connector tasks, input-driven decision APIs, Tasklist review, and incident recovery.
 
 ## Technology note
 
