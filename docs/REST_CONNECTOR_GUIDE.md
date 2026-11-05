@@ -1,68 +1,35 @@
 # REST Connector Guide
 
-The BPMN models use Camunda's **REST Outbound Connector** element template (`io.camunda.connectors.HttpJson.v2`, local template version 13). In Modeler, the template appears as an R-badge task. Technically, it remains a BPMN service task and runs with `io.camunda:http-json:1`.
+The service tasks that validate inputs or call mock external services use Camunda's **REST Outbound Connector** element template (`io.camunda.connectors.HttpJson.v2`, local template version 13). In Modeler these tasks show the R badge and run as `io.camunda:http-json:1`.
 
-The Spring Boot application exposes local synthetic APIs at `http://localhost:8081/mock`. The decision endpoints calculate a result from each request's inputs; the executable BPMN models do not call the retained DMN reference files.
+The three decision tasks are deliberately **business-rule tasks**, not REST calls. They evaluate the corresponding DMN table against current process variables. This keeps the routing criteria visible and lets you demonstrate the input columns, matching rule, output, and BPMN gateway.
 
-## Connector configuration
+## REST Connector tasks
 
-| Lab | BPMN task | Method + URL | Request values | Result expression |
+| Lab | BPMN task | Method + URL | Request inputs | Response variables |
 |---|---|---|---|---|
-| 1 | Mock credit assessment | `POST /mock/credit-assessments` | `syntheticCreditScore`, `simulateFailure` | `creditScore`, `creditStatus` |
-| 1 | Calculate loan decision | `POST /mock/decisions/loan` | `monthlyIncome`, `requestedAmount`, `creditScore` | `loanDecision`, `decisionReason` |
-| 2 | Calculate delivery priority | `POST /mock/decisions/order-priority` | `orderTotal`, `customerCategory`, `deliveryPreference` | `deliveryPriority` |
-| 2 | Mock payment gateway | `POST /mock/payments` | `paymentToken`, `simulateFailure` | `paymentStatus`, `transactionRef` |
-| 3 | Calculate triage category | `POST /mock/decisions/triage` | `urgencyIndicator`, `symptomsSummary` | `triageCategory` |
-| 3 | Mock scheduling API | `POST /mock/appointments` | `slotMode`, `simulateFailure` | `slotAvailable`, `availableSlot`, `availableSlots`, `bookingStatus` |
+| 1 | Validate applicant information | `POST /mock/validations/loan` | applicant ID, income, requested amount | `applicationValid`, `validationNote` |
+| 1 | Mock credit assessment | `POST /mock/credit-assessments` | synthetic credit score, failure flag | `creditScore`, `creditStatus` |
+| 2 | Validate order and reserve stock | `POST /mock/validations/order` | customer/product references, quantity, unit price | `orderValid`, `stockAvailable`, `orderTotal`, `inventoryNote` |
+| 2 | Mock payment gateway | `POST /mock/payments` | payment token, failure flag | `paymentStatus`, `transactionRef` |
+| 3 | Validate registration | `POST /mock/validations/registration` | patient reference, appointment preference, symptoms, urgency | `registrationValid`, `registrationNote` |
+| 3 | Mock scheduling API | `POST /mock/appointments` | slot mode, failure flag | `slotAvailable`, `availableSlot`, `availableSlots`, `bookingStatus` |
 
-Each task maps the JSON response to process variables in its `resultExpression` task header. The process gateways use those variables for routing. Keep the R-icon element template and do not replace these connector tasks with generic service tasks.
+All URLs use `http://localhost:8081` in the BPMN files. The connectors map each response into process variables using a `resultExpression` task header. The BPMN gateways and DMN tables use those variables in subsequent steps.
+
+## Where each decision is calculated
+
+| Lab | DMN | DMN input values | Output used by BPMN |
+|---|---|---|---|
+| 1 | `loan-decision` | `monthlyIncome`, `requestedAmount`, `creditScore` from the credit REST response | `loanDecision`: Approved, Manual Review, or Rejected |
+| 2 | `order-priority` | `orderTotal` calculated by the validation REST API, `customerCategory`, `deliveryPreference` | `deliveryPriority`: P1, P2, or P3 |
+| 3 | `triage-decision` | `urgencyIndicator`, `symptomsSummary` | `triageCategory`: Urgent Assessment, Priority Review, or Routine |
+
+The outputs are not fixed when a process starts. To demonstrate, start instances with different inputs, then show the DMN result variable and the matching outgoing path in Operate.
 
 For Camunda running in a separate container, replace `localhost` with `host.docker.internal` so it can reach the API on the Windows host. Do not put real API keys, card data, patient data, or passwords in either the model or repository.
 
-## Decision endpoint examples
-
-### Loan decision
-
-```http
-POST /mock/decisions/loan
-Content-Type: application/json
-
-{"monthlyIncome":60000,"requestedAmount":300000,"creditScore":720}
-```
-
-```json
-{"loanDecision":"Approved","decisionReason":"Income, requested amount, and credit score meet the approval thresholds."}
-```
-
-### Order priority
-
-```http
-POST /mock/decisions/order-priority
-Content-Type: application/json
-
-{"orderTotal":12000,"customerCategory":"GOLD","deliveryPreference":"EXPRESS"}
-```
-
-```json
-{"deliveryPriority":"P1"}
-```
-
-### Triage category
-
-```http
-POST /mock/decisions/triage
-Content-Type: application/json
-
-{"urgencyIndicator":"AMBER","symptomsSummary":"Needs priority review"}
-```
-
-```json
-{"triageCategory":"Priority Review"}
-```
-
-These are educational examples only. Triage is not clinical advice or a medical decision-support function.
-
-## Integration examples
+## Synthetic integration examples
 
 ### Credit assessment
 
@@ -77,6 +44,8 @@ Content-Type: application/json
 {"creditScore":720,"creditStatus":"CLEAR"}
 ```
 
+The DMN then combines `creditScore` with the income and amount submitted for that process instance.
+
 ### Payment gateway
 
 ```http
@@ -84,10 +53,6 @@ POST /mock/payments
 Content-Type: application/json
 
 {"paymentToken":"OK","simulateFailure":false}
-```
-
-```json
-{"paymentStatus":"APPROVED","transactionRef":"MOCK-…"}
 ```
 
 Use `"paymentToken":"DECLINE"` for a declined payment, or `"simulateFailure":true` to return HTTP 503.
@@ -101,11 +66,11 @@ Content-Type: application/json
 {"slotMode":"available","simulateFailure":false}
 ```
 
-The response contains the available slot and `bookingStatus="SLOT_AVAILABLE"`. Using `"slotMode":"none"` returns `slotAvailable:false`, an empty `availableSlots` list, and `bookingStatus="NO_SLOTS"`. This mock reports availability; it does not reserve a real appointment.
+Using `"slotMode":"none"` returns `slotAvailable:false`, an empty `availableSlots` list, and `bookingStatus="NO_SLOTS"`. This mock reports availability; it does not reserve a real appointment.
 
 ## Incident and recovery demonstration
 
-Switch the relevant integration mock off before starting a process. When Operate shows the failed REST job, turn the mock back on and retry the job. The request uses the same process variables; use the mock control endpoint rather than changing variables on a failed instance. The integration tasks have one attempt for a quick incident demonstration; decision tasks retry up to three times.
+Switch the relevant integration mock off before starting a process. When Operate shows the failed REST job, turn the mock back on and retry the job. The request uses the same process variables; use the mock control endpoint rather than changing variables on a failed instance.
 
 | Lab | Switch off | Switch on |
 |---|---|---|

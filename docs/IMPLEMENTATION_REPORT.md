@@ -2,22 +2,22 @@
 
 ## Architecture
 
-Each lab uses BPMN to orchestrate Java job workers and Camunda REST Outbound Connector tasks. The decision connector sends process-instance inputs to the local Spring Boot API, which computes and returns a decision variable; BPMN gateways route on that response. The DMN tables are retained as reference artifacts but are not invoked by the executable processes. Human-exception paths are Tasklist user tasks.
+Each lab uses BPMN to orchestrate Camunda REST Outbound Connector tasks, DMN decision tables, and Tasklist user tasks. The Spring Boot application hosts synthetic APIs for input validation and mock external integrations. Every DMN is called from its BPMN business-rule task and evaluates that instance's variables; its output is used by a BPMN gateway.
 
 ## Implementation notes
 
-- **Loan approval:** validates application data, requests a synthetic credit assessment, then sends income, requested amount, and returned credit score to the loan decision API. Its response routes to approval, rejection, or manual review.
-- **Order fulfilment:** validates the order and simulated stock, calculates `orderTotal`, requests a delivery-priority decision from the API, then applies the mock payment result. Priority `P1` and `P2` route to verification; `P3` proceeds to fulfilment.
-- **Patient appointment and triage:** validates registration, requests a category using the urgency indicator, and routes routine, priority, or urgent cases. The scheduling mock reports a slot list and availability; it is not clinical decision support or a real booking system.
+- **Loan approval:** a validation REST call checks the applicant ID and positive income/amount. A credit REST call returns the synthetic score. The loan DMN evaluates income, requested amount, and returned score; its output routes to approval, rejection, or manual review.
+- **Order fulfilment:** the first REST call validates order fields, calculates `orderTotal`, and evaluates synthetic stock availability. The order DMN uses total, customer category, and delivery preference to produce `deliveryPriority`. A payment REST call returns the payment result; P1/P2 orders route to verification.
+- **Patient appointment and triage:** a registration REST call checks required fields. The triage DMN evaluates urgency and symptoms inputs and routes routine, priority, or urgent cases. The scheduling REST mock returns a slot list and availability; it is not clinical decision support or a real booking system.
 
 ## Monitoring and recovery
 
-The integration mocks can be switched off to make a REST request fail. Operate then exposes the failed connector job for retry after restoring the mock. The request inputs are unchanged on retry. Capture the incident and post-retry state in the test matrix.
+Credit, payment, and scheduling mocks can be switched off to make their REST tasks fail. Operate then exposes the failed connector job for retry after restoring the mock. The request inputs are unchanged on retry. Capture the incident and post-retry state in the test matrix.
 
 ## Assumptions and limitations
 
 - The APIs are deterministic teaching mocks, not production services.
-- Decision thresholds are educational rules implemented by the API endpoints.
-- DMN artifacts are retained for reference but do not determine runtime outcomes.
+- DMN rules are illustrative and evaluate variables supplied by each process instance.
 - Approval, payment, and booking are simulated; no money, identity, or patient records are processed.
+- Triage is not medical advice or a clinical decision-support system.
 - Screenshots must be captured from the student's Camunda environment and added to `evidence/`.
